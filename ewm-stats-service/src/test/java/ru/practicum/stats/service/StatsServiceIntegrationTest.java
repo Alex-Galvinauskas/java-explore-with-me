@@ -10,10 +10,8 @@ import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
 import ru.practicum.stats.exception.StatsValidationException;
 import ru.practicum.stats.repository.StatsRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,13 +19,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 @Transactional
 class StatsServiceIntegrationTest {
-
     @Autowired
     private StatsService statsService;
-
     @Autowired
     private StatsRepository statsRepository;
-
     private LocalDateTime now;
     private LocalDateTime hourAgo;
     private LocalDateTime twoHoursAgo;
@@ -37,79 +32,56 @@ class StatsServiceIntegrationTest {
         now = LocalDateTime.now();
         hourAgo = now.minusHours(1);
         twoHoursAgo = now.minusHours(2);
-
         statsRepository.deleteAll();
     }
 
     @Test
     void shouldSaveAndRetrieveStats() {
-        // Given
         EndpointHit hit1 = createHit("/events/1", "192.168.1.1", hourAgo);
         EndpointHit hit2 = createHit("/events/1", "192.168.1.2", hourAgo);
         EndpointHit hit3 = createHit("/events/2", "192.168.1.1", hourAgo);
-
-        // When
         statsService.hit(hit1);
         statsService.hit(hit2);
         statsService.hit(hit3);
-
-        // Then - проверяем неуникальные хиты
         List<ViewStats> nonUniqueStats = statsService.getStats(
                 twoHoursAgo, now, List.of("/events/1", "/events/2"), false
         );
-
         assertThat(nonUniqueStats).hasSize(2);
-
         ViewStats event1Stats = findStatsByUri(nonUniqueStats, "/events/1");
         assertThat(event1Stats.getHits()).isEqualTo(2);
-
         ViewStats event2Stats = findStatsByUri(nonUniqueStats, "/events/2");
         assertThat(event2Stats.getHits()).isEqualTo(1);
-
-        // Then - проверяем уникальные хиты
         List<ViewStats> uniqueStats = statsService.getStats(
                 twoHoursAgo, now, List.of("/events/1", "/events/2"), true
         );
-
         event1Stats = findStatsByUri(uniqueStats, "/events/1");
-        assertThat(event1Stats.getHits()).isEqualTo(2); // Два разных IP
-
+        assertThat(event1Stats.getHits()).isEqualTo(2);
         event2Stats = findStatsByUri(uniqueStats, "/events/2");
         assertThat(event2Stats.getHits()).isEqualTo(1);
     }
 
     @Test
     void shouldNotSaveHitWithInvalidData() {
-        // Проверяем, что валидация на уровне DTO работает
         EndpointHit invalidHit = EndpointHit.builder()
                 .app("")
                 .uri("/events/1")
                 .ip("invalid-ip")
                 .timestamp(now)
                 .build();
-
-        // DTO валидация должна сработать до вызова сервиса,
-        // но если вдруг дойдет до сервиса, то БД тоже не примет
         assertThatThrownBy(() -> statsService.hit(invalidHit))
                 .isInstanceOf(Exception.class);
     }
 
     @Test
     void shouldReturnEmptyListWhenNoStats() {
-        // When
         List<ViewStats> stats = statsService.getStats(twoHoursAgo, now, null, false);
-
-        // Then
         assertThat(stats).isEmpty();
     }
 
     @Test
     void shouldThrowExceptionWhenDatesInvalid() {
-        // Given
         LocalDateTime invalidStart = now.plusDays(1);
         LocalDateTime invalidEnd = now.minusDays(1);
-
-        // When/Then
         assertThatThrownBy(() ->
                 statsService.getStats(invalidStart, invalidEnd, null, false))
                 .isInstanceOf(StatsValidationException.class)
@@ -118,19 +90,13 @@ class StatsServiceIntegrationTest {
 
     @Test
     void shouldHandleMultipleServices() {
-        // Given
         EndpointHit hit1 = createHit("service-1", "/events/1", "192.168.1.1", hourAgo);
         EndpointHit hit2 = createHit("service-1", "/events/1", "192.168.1.2", hourAgo);
         EndpointHit hit3 = createHit("service-2", "/events/1", "192.168.1.1", hourAgo);
-
-        // When
         statsService.hit(hit1);
         statsService.hit(hit2);
         statsService.hit(hit3);
-
-        // Then
         List<ViewStats> stats = statsService.getStats(twoHoursAgo, now, null, false);
-
         assertThat(stats).hasSize(2);
         assertThat(stats).anyMatch(s ->
                 s.getApp().equals("service-1") &&

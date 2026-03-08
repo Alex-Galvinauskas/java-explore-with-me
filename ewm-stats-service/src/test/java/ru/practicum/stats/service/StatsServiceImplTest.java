@@ -12,28 +12,21 @@ import ru.practicum.stats.exception.StatsValidationException;
 import ru.practicum.stats.mapper.StatsMapper;
 import ru.practicum.stats.model.EndpointHitEntity;
 import ru.practicum.stats.repository.StatsRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class StatsServiceImplTest {
-
     @Mock
     private StatsRepository statsRepository;
-
     @Mock
     private StatsMapper statsMapper;
-
     @InjectMocks
     private StatsServiceImpl statsService;
-
     private LocalDateTime now;
     private LocalDateTime start;
     private LocalDateTime end;
@@ -46,14 +39,12 @@ class StatsServiceImplTest {
         now = LocalDateTime.now();
         start = now.minusDays(1);
         end = now.plusDays(1);
-
         hitDto = EndpointHit.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .timestamp(now)
                 .build();
-
         hitEntity = EndpointHitEntity.builder()
                 .id(1L)
                 .app("ewm-main-service")
@@ -61,7 +52,6 @@ class StatsServiceImplTest {
                 .ip("192.168.1.1")
                 .timestamp(now)
                 .build();
-
         viewStats = ViewStats.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
@@ -71,44 +61,33 @@ class StatsServiceImplTest {
 
     @Test
     void shouldSaveHit() {
-        // Given
         when(statsMapper.toEntity(hitDto)).thenReturn(hitEntity);
         when(statsRepository.save(any(EndpointHitEntity.class))).thenReturn(hitEntity);
-
-        // When
         statsService.hit(hitDto);
-
-        // Then
         verify(statsMapper, times(1)).toEntity(hitDto);
         verify(statsRepository, times(1)).save(hitEntity);
     }
 
     @Test
     void shouldSetCurrentTimestampIfNotProvided() {
-        // Given
         EndpointHit hitWithoutTimestamp = EndpointHit.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .build();
-
         EndpointHitEntity entityWithoutTimestamp = EndpointHitEntity.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .build();
-
         when(statsMapper.toEntity(hitWithoutTimestamp)).thenReturn(entityWithoutTimestamp);
-        when(statsRepository.save(any(EndpointHitEntity.class))).thenAnswer(invocation -> {
-            EndpointHitEntity saved = invocation.getArgument(0);
-            saved.setId(1L);
-            return saved;
-        });
-
-        // When
+        when(statsRepository.save(any(EndpointHitEntity.class)))
+                .thenAnswer(invocation -> {
+                    EndpointHitEntity saved = invocation.getArgument(0);
+                    saved.setId(1L);
+                    return saved;
+                });
         statsService.hit(hitWithoutTimestamp);
-
-        // Then
         verify(statsRepository).save(argThat(entity ->
                 entity.getTimestamp() != null &&
                         entity.getTimestamp().isBefore(LocalDateTime.now().plusSeconds(1))
@@ -117,102 +96,74 @@ class StatsServiceImplTest {
 
     @Test
     void shouldGetStatsWithFilters() {
-        // Given
         List<String> uris = List.of("/events/1", "/events/2");
         List<ViewStats> expectedStats = List.of(viewStats);
-
         when(statsRepository.getStats(start, end, uris, false)).thenReturn(expectedStats);
-
-        // When
         List<ViewStats> actualStats = statsService.getStats(start, end, uris, false);
-
-        // Then
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1)).getStats(start, end, uris, false);
+        verify(statsRepository, times(1))
+                .getStats(start, end, uris, false);
     }
 
     @Test
     void shouldConvertEmptyUrisToNull() {
-        // Given
         List<String> emptyUris = List.of();
         List<ViewStats> expectedStats = List.of(viewStats);
-
         when(statsRepository.getStats(start, end, null, false)).thenReturn(expectedStats);
-
-        // When
         List<ViewStats> actualStats = statsService.getStats(start, end, emptyUris, false);
-
-        // Then
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1)).getStats(start, end, null, false);
+        verify(statsRepository, times(1))
+                .getStats(start, end, null, false);
     }
 
     @Test
     void shouldGetAllStats() {
-        // Given
         List<ViewStats> expectedStats = List.of(viewStats);
-
         when(statsRepository.getStatsAll(start, end, false)).thenReturn(expectedStats);
-
-        // When
         List<ViewStats> actualStats = statsService.getStatsAll(start, end, false);
-
-        // Then
         assertThat(actualStats).isEqualTo(expectedStats);
         verify(statsRepository, times(1)).getStatsAll(start, end, false);
     }
 
     @Test
     void shouldThrowExceptionWhenStartIsNull() {
-        // When/Then
-        assertThatThrownBy(() -> statsService.getStats(null, end, null, false))
+        assertThatThrownBy(() ->
+                statsService.getStats(null, end, null, false))
                 .isInstanceOf(StatsValidationException.class)
                 .hasMessageContaining("Даты начала и конца должны быть указаны");
     }
 
     @Test
     void shouldThrowExceptionWhenEndIsNull() {
-        // When/Then
-        assertThatThrownBy(() -> statsService.getStats(start, null, null, false))
+        assertThatThrownBy(() ->
+                statsService.getStats(start, null, null, false))
                 .isInstanceOf(StatsValidationException.class)
                 .hasMessageContaining("Даты начала и конца должны быть указаны");
     }
 
     @Test
     void shouldThrowExceptionWhenStartIsAfterEnd() {
-        // Given
         LocalDateTime invalidStart = end.plusDays(1);
-
-        // When/Then
-        assertThatThrownBy(() -> statsService.getStats(invalidStart, end, null, false))
+        assertThatThrownBy(() ->
+                statsService.getStats(invalidStart, end, null, false))
                 .isInstanceOf(StatsValidationException.class)
                 .hasMessageContaining("не может быть позже");
     }
 
     @Test
     void shouldHandleNullUris() {
-        // Given
         List<ViewStats> expectedStats = List.of(viewStats);
-
         when(statsRepository.getStats(start, end, null, true)).thenReturn(expectedStats);
-
-        // When
         List<ViewStats> actualStats = statsService.getStats(start, end, null, true);
-
-        // Then
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1)).getStats(start, end, null, true);
+        verify(statsRepository, times(1))
+                .getStats(start, end, null, true);
     }
 
     @Test
     void shouldHandleEmptyStatsList() {
-        // Given
         when(statsRepository.getStats(start, end, null, false)).thenReturn(List.of());
-
-        // When
         List<ViewStats> actualStats = statsService.getStats(start, end, null, false);
-
-        // Then
         assertThat(actualStats).isEmpty();
     }
 }
