@@ -1,0 +1,15 @@
+stats-server:
+  url: http://localhost:9090
+
+stats:
+  client:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+    retry:
+      max-attempts: 3
+      initial-delay: 1000
+
+logging:
+  level:
+    ru.practicum.stats.client: DEBUG
