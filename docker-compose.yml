@@ -1,14 +1,93 @@
+version: '3.8'
+
 services:
-  stats-server:
+  # База данных для основного сервиса
+  main-db:
+    image: postgres:16-alpine
+    container_name: explore-with-me-main-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=explore_with_me_main
+      - POSTGRES_USER=main_user
+      - POSTGRES_PASSWORD=main_password
+    volumes:
+      - main-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U main_user -d explore_with_me_main" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - explore-with-me-network
+
+  # База данных для сервиса статистики
+  stats-db:
+    image: postgres:16-alpine
+    container_name: explore-with-me-stats-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=explore_with_me_stats
+      - POSTGRES_USER=stats_user
+      - POSTGRES_PASSWORD=stats_password
+    volumes:
+      - stats-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U stats_user -d explore_with_me_stats" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - explore-with-me-network
+
+  # Сервис статистики
+  stats-service:
+    build:
+      context: .
+      dockerfile: ewm-stats-service/Dockerfile
+    container_name: explore-with-me-stats-service
     ports:
       - "9090:9090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/explore_with_me_stats
+      - SPRING_DATASOURCE_USERNAME=stats_user
+      - SPRING_DATASOURCE_PASSWORD=stats_password
+      - SERVER_PORT=9090
+    depends_on:
+      stats-db:
+        condition: service_healthy
+    networks:
+      - explore-with-me-network
 
-  stats-db:
-    image: postgres:16.1
-
-  ewm-service:
+  # Основной сервис
+  main-service:
+    build:
+      context: .
+      dockerfile: ewm-main-service/Dockerfile
+    container_name: explore-with-me-main-service
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/explore_with_me_main
+      - SPRING_DATASOURCE_USERNAME=main_user
+      - SPRING_DATASOURCE_PASSWORD=main_password
+      - STATS_SERVICE_URL=http://stats-service:9090
+      - SERVER_PORT=8080
+    depends_on:
+      main-db:
+        condition: service_healthy
+      stats-service:
+        condition: service_started
+    networks:
+      - explore-with-me-network
 
-  ewm-db:
-    image: postgres:16.1
+volumes:
+  main-db-data:
+  stats-db-data:
+
+networks:
+  explore-with-me-network:
+    driver: bridge
