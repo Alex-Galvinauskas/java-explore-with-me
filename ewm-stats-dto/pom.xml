@@ -15,7 +15,6 @@
 
     <properties>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <!-- Изменяем версию jakarta.el на правильную -->
         <jakarta-el.version>4.0.2</jakarta-el.version>
     </properties>
 
@@ -66,7 +65,6 @@
             <version>${hibernate-validator.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Исправленная зависимость для Jakarta EL -->
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.el</artifactId>

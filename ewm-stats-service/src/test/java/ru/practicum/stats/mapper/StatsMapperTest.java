@@ -4,18 +4,14 @@ import org.junit.jupiter.api.Test;
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.mapper.impl.StatsMapperImpl;
 import ru.practicum.stats.model.EndpointHitEntity;
-
 import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StatsMapperTest {
-
     private final StatsMapper mapper = new StatsMapperImpl();
 
     @Test
     void shouldMapDtoToEntity() {
-        // Given
         LocalDateTime now = LocalDateTime.now();
         EndpointHit dto = EndpointHit.builder()
                 .app("ewm-main-service")
@@ -23,11 +19,7 @@ class StatsMapperTest {
                 .ip("192.168.1.1")
                 .timestamp(now)
                 .build();
-
-        // When
         EndpointHitEntity entity = mapper.toEntity(dto);
-
-        // Then
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isNull();
         assertThat(entity.getApp()).isEqualTo(dto.getApp());
@@ -38,7 +30,6 @@ class StatsMapperTest {
 
     @Test
     void shouldMapEntityToDto() {
-        // Given
         LocalDateTime now = LocalDateTime.now();
         EndpointHitEntity entity = EndpointHitEntity.builder()
                 .id(1L)
@@ -47,11 +38,7 @@ class StatsMapperTest {
                 .ip("192.168.1.1")
                 .timestamp(now)
                 .build();
-
-        // When
         EndpointHit dto = mapper.toDto(entity);
-
-        // Then
         assertThat(dto).isNotNull();
         assertThat(dto.getId()).isEqualTo(entity.getId());
         assertThat(dto.getApp()).isEqualTo(entity.getApp());
@@ -62,13 +49,8 @@ class StatsMapperTest {
 
     @Test
     void shouldHandleNullValues() {
-        // Given
         EndpointHit dto = EndpointHit.builder().build();
-
-        // When
         EndpointHitEntity entity = mapper.toEntity(dto);
-
-        // Then
         assertThat(entity).isNotNull();
         assertThat(entity.getApp()).isNull();
         assertThat(entity.getUri()).isNull();

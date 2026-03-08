@@ -15,11 +15,9 @@ import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
 import ru.practicum.stats.exception.ErrorHandler;
 import ru.practicum.stats.service.StatsService;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -27,15 +25,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class StatsControllerTest {
-
     private MockMvc mockMvc;
-
     @Mock
     private StatsService statsService;
-
     @InjectMocks
     private StatsController statsController;
-
     private ObjectMapper objectMapper;
     private DateTimeFormatter formatter;
     private LocalDateTime now;
@@ -46,23 +40,19 @@ class StatsControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         now = LocalDateTime.now();
-
         hitDto = EndpointHit.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .timestamp(now)
                 .build();
-
         viewStats = ViewStats.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .hits(5L)
                 .build();
-
         mockMvc = MockMvcBuilders.standaloneSetup(statsController)
                 .setControllerAdvice(new ErrorHandler())
                 .build();
@@ -70,48 +60,37 @@ class StatsControllerTest {
 
     @Test
     void shouldSaveHit() throws Exception {
-        // Given
         doNothing().when(statsService).hit(any(EndpointHit.class));
-
-        // When/Then
         mockMvc.perform(post("/hit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(hitDto)))
                 .andExpect(status().isCreated());
-
         verify(statsService, times(1)).hit(any(EndpointHit.class));
     }
 
     @Test
     void shouldReturn400WhenHitDtoInvalid() throws Exception {
-        // Given
         EndpointHit invalidHit = EndpointHit.builder()
-                .app("") // Пустое поле
+                .app("")
                 .uri("/events/1")
                 .ip("invalid-ip")
                 .timestamp(now)
                 .build();
-
-        // When/Then
         mockMvc.perform(post("/hit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidHit)))
                 .andExpect(status().isBadRequest());
-
         verify(statsService, never()).hit(any(EndpointHit.class));
     }
 
     @Test
     void shouldGetStats() throws Exception {
-        // Given
         List<ViewStats> expectedStats = List.of(viewStats);
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(LocalDateTime.class),
+                any(LocalDateTime.class),
                 anyList(), anyBoolean())).thenReturn(expectedStats);
-
         String startStr = now.minusDays(1).format(formatter);
         String endStr = now.plusDays(1).format(formatter);
-
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", startStr)
                         .param("end", endStr)
@@ -122,34 +101,31 @@ class StatsControllerTest {
                 .andExpect(jsonPath("$[0].app").value("ewm-main-service"))
                 .andExpect(jsonPath("$[0].uri").value("/events/1"))
                 .andExpect(jsonPath("$[0].hits").value(5));
-
-        verify(statsService, times(1)).getStats(any(LocalDateTime.class),
-                any(LocalDateTime.class), eq(List.of("/events/1")), eq(false));
+        verify(statsService, times(1))
+                .getStats(any(LocalDateTime.class),
+                any(LocalDateTime.class),
+                eq(List.of("/events/1")), eq(false));
     }
 
     @Test
     void shouldGetStatsWithDefaultUnique() throws Exception {
-        // Given
         List<ViewStats> expectedStats = List.of(viewStats);
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(LocalDateTime.class),
+                any(LocalDateTime.class),
                 any(), anyBoolean())).thenReturn(expectedStats);
-
         String startStr = now.minusDays(1).format(formatter);
         String endStr = now.plusDays(1).format(formatter);
-
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", startStr)
                         .param("end", endStr))
                 .andExpect(status().isOk());
-
-        verify(statsService, times(1)).getStats(any(LocalDateTime.class),
+        verify(statsService, times(1))
+                .getStats(any(LocalDateTime.class),
                 any(LocalDateTime.class), isNull(), eq(false));
     }
 
     @Test
     void shouldReturn400WhenStartDateMissing() throws Exception {
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("end", now.format(formatter)))
                 .andExpect(status().isBadRequest());
@@ -157,7 +133,6 @@ class StatsControllerTest {
 
     @Test
     void shouldReturn400WhenEndDateMissing() throws Exception {
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", now.format(formatter)))
                 .andExpect(status().isBadRequest());
@@ -165,7 +140,6 @@ class StatsControllerTest {
 
     @Test
     void shouldReturn400WhenInvalidDateFormat() throws Exception {
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", "invalid-date")
                         .param("end", "invalid-date"))
@@ -174,35 +148,28 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithMultipleUris() throws Exception {
-        // Given
         List<ViewStats> expectedStats = List.of(viewStats);
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(LocalDateTime.class),
+                any(LocalDateTime.class),
                 anyList(), anyBoolean())).thenReturn(expectedStats);
-
         String startStr = now.minusDays(1).format(formatter);
         String endStr = now.plusDays(1).format(formatter);
-
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", startStr)
                         .param("end", endStr)
                         .param("uris", "/events/1", "/events/2"))
                 .andExpect(status().isOk());
-
         verify(statsService, times(1)).getStats(any(LocalDateTime.class),
-                any(LocalDateTime.class), eq(List.of("/events/1", "/events/2")), eq(false));
+                any(LocalDateTime.class), eq(List.of("/events/1",
+                        "/events/2")), eq(false));
     }
 
     @Test
     void shouldHandleEmptyStats() throws Exception {
-        // Given
         when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 any(), anyBoolean())).thenReturn(List.of());
-
         String startStr = now.minusDays(1).format(formatter);
         String endStr = now.plusDays(1).format(formatter);
-
-        // When/Then
         mockMvc.perform(get("/stats")
                         .param("start", startStr)
                         .param("end", endStr))
