@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Category {
+public class Category implements BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
