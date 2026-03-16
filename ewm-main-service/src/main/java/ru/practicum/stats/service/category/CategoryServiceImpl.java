@@ -16,6 +16,7 @@ import ru.practicum.stats.model.Category;
 import ru.practicum.stats.repository.CategoryRepository;
 import ru.practicum.stats.repository.EventRepository;
 
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("Добавление новой категории: {}", newCategoryDto.getName());
 
         Category category = categoryMapper.toEntity(newCategoryDto);
+
         try {
             Category savedCategory = categoryRepository.save(category);
             log.info("Категория успешно добавлена с id: {}", savedCategory.getId());
@@ -41,7 +43,11 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (DataIntegrityViolationException e) {
             String message = String.format("Категория с именем '%s' уже существует", newCategoryDto.getName());
             log.warn(message, e);
-            throw new ConflictException(message);
+
+            if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
+                throw new ConflictException(message);
+            }
+            throw new ConflictException("Ошибка при создании категории: " + e.getMessage());
         }
     }
 
@@ -54,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new NotFoundException("Категория с id=" + catId + " не найдена"));
 
         if (category.getName().equals(categoryDto.getName())) {
-            log.info("Имя категории не изменилось, обновление не требуется для поля name");
+            log.info("Имя категории не изменилось");
             return categoryMapper.toDto(category);
         }
 
@@ -67,7 +73,11 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (DataIntegrityViolationException e) {
             String message = String.format("Категория с именем '%s' уже существует", categoryDto.getName());
             log.warn(message, e);
-            throw new ConflictException(message);
+
+            if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
+                throw new ConflictException(message);
+            }
+            throw new ConflictException("Ошибка при обновлении категории: " + e.getMessage());
         }
     }
 
@@ -76,18 +86,23 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(Long catId) {
         log.info("Удаление категории с id: {}", catId);
 
-        Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Категория с id=" + catId + " не найдена"));
+        if (!categoryRepository.existsById(catId)) {
+            throw new NotFoundException("Категория с id=" + catId + " не найдена");
+        }
 
         if (eventRepository.existsByCategoryId(catId)) {
-            String message = String.format
-                    ("Невозможно удалить категорию с id=%d, так как с ней связаны существующие события", catId);
+            String message = String.format("Невозможно удалить категорию с id=%d, так как с ней связаны существующие события", catId);
             log.warn(message);
             throw new ConflictException(message);
         }
 
-        categoryRepository.delete(category);
-        log.info("Категория с id: {} успешно удалена", catId);
+        try {
+            categoryRepository.deleteById(catId);
+            log.info("Категория с id: {} успешно удалена", catId);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Ошибка при удалении категории с id: {}", catId, e);
+            throw new ConflictException("Невозможно удалить категорию с id=" + catId + ", так как с ней связаны события");
+        }
     }
 
     @Override
