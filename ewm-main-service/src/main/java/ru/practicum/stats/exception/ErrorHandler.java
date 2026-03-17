@@ -113,4 +113,18 @@ public class ErrorHandler {
                 .errors(List.of(e.getClass().getName()))
                 .build();
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleIllegalArgumentException(final IllegalArgumentException e) {
+        log.error("Некорректный параметр запроса: {}", e.getMessage());
+
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .errors(List.of())
+                .build();
+    }
 }

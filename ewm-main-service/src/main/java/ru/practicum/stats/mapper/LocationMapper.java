@@ -25,7 +25,8 @@ public interface LocationMapper {
         if (locationDto == null || locationDto.getLat() == null || locationDto.getLon() == null) {
             return null;
         }
-        return GEOMETRY_FACTORY.createPoint(new Coordinate(locationDto.getLon(), locationDto.getLat()));
+        return GEOMETRY_FACTORY.createPoint(new Coordinate(locationDto.getLon(),
+                locationDto.getLat()));
     }
 
     default LocationDto fromPoint(Point point) {
