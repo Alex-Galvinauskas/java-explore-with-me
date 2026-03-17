@@ -1,11 +1,15 @@
 package ru.practicum.stats.service.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.EndpointHit;
+import ru.practicum.stats.dto.ViewStats;
 import ru.practicum.stats.dto.event.EventFullDto;
 import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.dto.event.NewEventDto;
@@ -24,7 +28,7 @@ import ru.practicum.stats.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,8 +42,10 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final StatsClient statsClient;
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String APP_NAME = "ewm-main-service";
 
     @Override
     @Transactional
@@ -113,10 +119,201 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
 
+        Map<Long, Long> viewsMap = getViewsForEvents(events);
+        events.forEach(event ->
+                event.setViews(viewsMap.getOrDefault(event.getId(), 0L))
+        );
+
         log.info("Найдено {} событий для пользователя с id: {}", events.size(), userId);
 
         return events.stream()
                 .map(eventMapper::toShortDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public EventFullDto getEvent(Long id, HttpServletRequest request) {
+        log.info("Получение события с id: {}", id);
+
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Событие с id " + id + " не найдено"));
+
+        if (event.getState() != EventState.PUBLISHED) {
+            throw new NotFoundException("Событие с id " + id + " не найдено");
+        }
+
+        saveHitAsync(request);
+
+        Long views = getViewsForEvent(id);
+        event.setViews(views);
+
+        log.info("Событие с id: {} успешно получено, просмотров: {}", id, views);
+
+        return eventMapper.toFullDto(event);
+    }
+
+    @Override
+    public List<EventShortDto> getEvents(EventSearchParams params, HttpServletRequest request) {
+        log.info("Поиск событий с параметрами: {}", params);
+
+        LocalDateTime rangeStart = params.getRangeStart();
+        LocalDateTime rangeEnd = params.getRangeEnd();
+
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now();
+        }
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(100);
+        }
+
+        int from = params.getFrom() != null ? params.getFrom() : 0;
+        int size = params.getSize() != null ? params.getSize() : 10;
+        Pageable pageable = PageRequest.of(from / size, size);
+
+        List<Event> events = eventRepository.findPublishedEvents(
+                EventState.PUBLISHED,
+                params.getText(),
+                params.getCategories(),
+                params.getPaid(),
+                rangeStart,
+                rangeEnd,
+                params.getOnlyAvailable() != null ? params.getOnlyAvailable() : false,
+                params.getSort(),
+                pageable
+        );
+
+        if (events.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Long> viewsMap = getViewsForEvents(events);
+
+        events.forEach(event ->
+                event.setViews(viewsMap.getOrDefault(event.getId(), 0L))
+        );
+
+        if (request != null) {
+            saveHitAsync(request);
+        }
+
+        log.info("Найдено {} событий", events.size());
+
+        return events.stream()
+                .map(eventMapper::toShortDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Сохраняет информацию о просмотре в сервисе статистики
+     */
+    private void saveHit(HttpServletRequest request) {
+        try {
+            EndpointHit hit = EndpointHit.builder()
+                    .app(APP_NAME)
+                    .uri(request.getRequestURI())
+                    .ip(getClientIp(request))
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            statsClient.hit(hit);
+            log.debug("Просмотр сохранен: {}", hit);
+        } catch (Exception e) {
+            log.error("Ошибка при сохранении статистики: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Асинхронно сохраняет информацию о просмотре
+     */
+    private void saveHitAsync(HttpServletRequest request) {
+        try {
+            EndpointHit hit = EndpointHit.builder()
+                    .app(APP_NAME)
+                    .uri(request.getRequestURI())
+                    .ip(getClientIp(request))
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            statsClient.hitAsync(hit);
+            log.debug("Асинхронное сохранение просмотра: {}", hit);
+        } catch (Exception e) {
+            log.error("Ошибка при асинхронном сохранении статистики: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Получает количество просмотров для одного события
+     */
+    private Long getViewsForEvent(Long eventId) {
+        try {
+            LocalDateTime start = LocalDateTime.now().minusYears(10); // Смотрим за последние 10 лет
+            LocalDateTime end = LocalDateTime.now();
+            String uri = "/events/" + eventId;
+
+            List<ViewStats> stats = statsClient.getStats(start, end, List.of(uri), false);
+
+            if (!stats.isEmpty()) {
+                return stats.getFirst().getHits();
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики для события {}: {}", eventId, e.getMessage());
+        }
+        return 0L;
+    }
+
+    /**
+     * Получает просмотры для нескольких событий
+     */
+    private Map<Long, Long> getViewsForEvents(List<Event> events) {
+        if (events.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        try {
+            List<String> uris = events.stream()
+                    .map(event -> "/events/" + event.getId())
+                    .collect(Collectors.toList());
+
+            LocalDateTime start = LocalDateTime.now().minusYears(10);
+            LocalDateTime end = LocalDateTime.now();
+
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
+
+            return stats.stream()
+                    .filter(stat -> stat.getUri() != null && stat.getUri().startsWith("/events/"))
+                    .collect(Collectors.toMap(
+                            stat -> extractEventId(stat.getUri()),
+                            ViewStats::getHits,
+                            (v1, v2) -> v1
+                    ));
+
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики для списка событий: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Извлекает ID события из URI
+     */
+    private Long extractEventId(String uri) {
+        try {
+            String[] parts = uri.split("/");
+            return Long.parseLong(parts[parts.length - 1]);
+        } catch (Exception e) {
+            log.error("Ошибка при извлечении ID события из URI: {}", uri);
+            return -1L;
+        }
+    }
+
+    /**
+     * Получает IP клиента из request
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
