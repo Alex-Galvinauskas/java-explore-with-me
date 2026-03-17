@@ -1,17 +1,19 @@
 package ru.practicum.stats.repository;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.practicum.stats.model.Event;
 import ru.practicum.stats.model.enums.EventState;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface EventRepository extends BaseRepository<Event> {
+public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Event e WHERE e.category.id = :categoryId")
     boolean existsByCategoryId(@Param("categoryId") Long categoryId);
@@ -25,14 +27,12 @@ public interface EventRepository extends BaseRepository<Event> {
             "    LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (CAST(:rangeStart AS date) IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (CAST(:rangeEnd AS date) IS NULL OR e.eventDate <= :rangeEnd) " +
+            "AND (e.eventDate >= :rangeStart) " +
+            "AND (e.eventDate <= :rangeEnd) " +
             "AND (:onlyAvailable = false OR " +
             "   e.participantLimit = 0 OR " +
             "   e.confirmedRequests < e.participantLimit) " +
-            "ORDER BY " +
-            "CASE WHEN :sort = 'EVENT_DATE' THEN e.eventDate END ASC, " +
-            "CASE WHEN :sort = 'VIEWS' THEN e.views END DESC")
+            "ORDER BY e.eventDate ASC")
     List<Event> findPublishedEvents(
             @Param("state") EventState state,
             @Param("text") String text,
@@ -41,11 +41,9 @@ public interface EventRepository extends BaseRepository<Event> {
             @Param("rangeStart") LocalDateTime rangeStart,
             @Param("rangeEnd") LocalDateTime rangeEnd,
             @Param("onlyAvailable") Boolean onlyAvailable,
-            @Param("sort") String sort,
             Pageable pageable
     );
 
-    // Перегруженный метод для случаев, когда не нужна пагинация
     @Query("SELECT e FROM Event e " +
             "WHERE e.state = :state " +
             "AND (:text IS NULL OR " +
@@ -53,8 +51,8 @@ public interface EventRepository extends BaseRepository<Event> {
             "    LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (CAST(:rangeStart AS date) IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (CAST(:rangeEnd AS date) IS NULL OR e.eventDate <= :rangeEnd) " +
+            "AND (e.eventDate >= :rangeStart) " +
+            "AND (e.eventDate <= :rangeEnd) " +
             "AND (:onlyAvailable = false OR " +
             "   e.participantLimit = 0 OR " +
             "   e.confirmedRequests < e.participantLimit)")

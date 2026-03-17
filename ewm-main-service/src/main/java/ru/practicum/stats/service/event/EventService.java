@@ -1,9 +1,8 @@
 package ru.practicum.stats.service.event;
 
 import jakarta.servlet.http.HttpServletRequest;
-import ru.practicum.stats.dto.event.EventFullDto;
-import ru.practicum.stats.dto.event.EventShortDto;
-import ru.practicum.stats.dto.event.NewEventDto;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.stats.dto.event.*;
 
 import java.util.List;
 
@@ -15,4 +14,12 @@ public interface EventService {
     EventFullDto getEvent(Long id, HttpServletRequest request);
 
     List<EventShortDto> getEvents(EventSearchParams params, HttpServletRequest request);
+
+    EventFullDto getEventById(Long id);
+
+    @Transactional
+    EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request);
+
+    @Transactional
+    EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest request);
 }

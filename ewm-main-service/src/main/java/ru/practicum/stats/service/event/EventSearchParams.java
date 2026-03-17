@@ -19,6 +19,9 @@ public class EventSearchParams {
     private String sort;
     private Integer from;
     private Integer size;
+
     private Long userId;
+
+    private List<Long> users;
     private List<EventState> states;
 }

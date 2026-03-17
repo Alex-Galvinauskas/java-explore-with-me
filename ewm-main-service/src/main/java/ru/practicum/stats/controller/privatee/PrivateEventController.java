@@ -1,4 +1,4 @@
-package ru.practicum.stats.controller.event;
+package ru.practicum.stats.controller.privatee;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
