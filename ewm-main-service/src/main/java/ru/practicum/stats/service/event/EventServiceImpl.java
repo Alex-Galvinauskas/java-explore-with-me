@@ -1,5 +1,6 @@
 package ru.practicum.stats.service.event;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,11 +56,16 @@ public class EventServiceImpl implements EventService {
         User initiator = validator.validateAndGetUser(userId);
         validator.validateCategoryExists(newEventDto.getCategory());
 
-        Category category = categoryRepository.findById(newEventDto.getCategory()).get();
-        LocalDateTime eventDate = validator.parseAndValidateEventDate(newEventDto.getEventDate(),
-                2);
+        Category category = categoryRepository.findById(newEventDto.getCategory())
+                .orElseThrow(() -> new NotFoundException("Категория с id " +
+                        newEventDto.getCategory() + " не найдена"));
 
-        Event event = eventBuilder.buildFromNewEventDto(newEventDto, initiator, category, eventDate);
+        LocalDateTime eventDate =
+                validator.parseAndValidateEventDate(newEventDto.getEventDate(), 2);
+
+        Event event = eventBuilder.buildFromNewEventDto(newEventDto, initiator, category);
+        event.setEventDate(eventDate);
+
         Event savedEvent = eventRepository.save(event);
 
         log.info("Событие успешно добавлено с id: {}", savedEvent.getId());

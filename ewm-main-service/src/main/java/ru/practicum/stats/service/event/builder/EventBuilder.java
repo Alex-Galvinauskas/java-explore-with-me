@@ -21,14 +21,12 @@ public class EventBuilder {
     private static final long DEFAULT_CONFIRMED_REQUESTS = 0L;
     private static final long DEFAULT_VIEWS = 0L;
 
-    public Event buildFromNewEventDto(NewEventDto dto, User initiator, Category category, LocalDateTime eventDate) {
+    public Event buildFromNewEventDto(NewEventDto dto, User initiator, Category category) {
         Event event = eventMapper.toEntity(dto);
         event.setInitiator(initiator);
         event.setCategory(category);
-        event.setEventDate(eventDate);
         event.setState(EventState.PENDING);
         event.setCreatedOn(LocalDateTime.now());
-
         if (dto.getLocation() != null) {
             event.setLocation(locationMapper.toEntity(dto.getLocation()));
         }
