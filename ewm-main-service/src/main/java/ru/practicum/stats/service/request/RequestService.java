@@ -7,7 +7,7 @@ import ru.practicum.stats.dto.request.ParticipationRequestDto;
 import java.util.List;
 
 public interface RequestService {
-    ParticipationRequestDto addParticipationRequest(Long userId, Long eventId);
+    ParticipationRequestDto addParticipationRequest(Long userId, Long eventId, String clientIp); // Добавлен параметр clientIp
 
     List<ParticipationRequestDto> getUserRequests(Long userId);
 
