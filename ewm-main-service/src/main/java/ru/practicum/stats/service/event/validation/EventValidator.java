@@ -61,7 +61,7 @@ public class EventValidator {
     public void validateEventDateNotInPast(LocalDateTime eventDate, int minHoursFromNow) {
         LocalDateTime minAllowedDate = LocalDateTime.now().plusHours(minHoursFromNow);
         if (eventDate.isBefore(minAllowedDate)) {
-            throw new ValidationException(
+            throw new ConflictException(
                     String.format("Дата события должна быть не раньше чем через %d часа(ов) от текущего момента",
                             minHoursFromNow)
             );
@@ -82,11 +82,11 @@ public class EventValidator {
 
     public void validateAdminEventDateUpdate(Event event, LocalDateTime newDate) {
         if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new ValidationException("Дата события должна быть не раньше чем через 1 час от текущего момента");
+            throw new ConflictException("Дата события должна быть не раньше чем через 1 час от текущего момента");
         }
 
         if (event.getState() == EventState.PUBLISHED && newDate.isBefore(event.getEventDate())) {
-            throw new ValidationException("Дата опубликованного события не может быть изменена на более раннюю");
+            throw new ConflictException("Дата опубликованного события не может быть изменена на более раннюю");
         }
     }
 
