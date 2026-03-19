@@ -23,15 +23,15 @@ public class StatisticsService {
     private static final String APP_NAME = "ewm-main-service";
     private static final long DEFAULT_VIEWS = 0L;
 
-    public void saveHitAsync(HttpServletRequest request) {
+    public void saveHit(HttpServletRequest request) {
         if (request == null) return;
 
         try {
             EndpointHit hit = buildEndpointHit(request);
-            statsClient.hitAsync(hit);
-            log.debug("Асинхронное сохранение просмотра: {}", hit);
+            statsClient.hit(hit);
+            log.debug("Сохранение просмотра: {}", hit);
         } catch (Exception e) {
-            log.error("Ошибка при асинхронном сохранении статистики: {}", e.getMessage());
+            log.error("Ошибка при сохранении статистики: {}", e.getMessage());
         }
     }
 

@@ -87,19 +87,14 @@ public class EventServiceImpl implements EventService {
         return mapToShortDtoList(events);
     }
 
-    @Override
     public EventFullDto getEvent(Long id, HttpServletRequest request) {
-        log.info("Получение события с id: {}", id);
-
         Event event = findPublishedEventById(id);
-        eventEnricher.enrichEventsWithAdditionalData(List.of(event));
 
-        statisticsService.saveHitAsync(request);
+        statisticsService.saveHit(request);
 
         Long views = statisticsService.getViewsForEvent(id);
         event.setViews(views);
 
-        log.info("Событие с id: {} успешно получено, просмотров: {}", id, views);
         return eventMapper.toFullDto(event);
     }
 
@@ -122,7 +117,7 @@ public class EventServiceImpl implements EventService {
             sortEventsByViews(events);
         }
 
-        statisticsService.saveHitAsync(request);
+        statisticsService.saveHit(request);
 
         log.info("Найдено {} событий", events.size());
         return mapToShortDtoList(events);
