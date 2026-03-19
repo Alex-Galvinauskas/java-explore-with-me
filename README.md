@@ -1,6 +1,69 @@
 # *Explore With Me* 🗺️
 *Приложение для поиска и организации событий, позволяющее пользователям делиться информацией об интересных мероприятиях и находить компанию для участия.*
 
+## Технологии
+- **Java 17**
+- **Spring Boot 3** (Web, Data JPA, Validation)
+- **PostgreSQL**
+- **Docker & Docker Compose**
+- **Maven**
+- **Lombok**
+- **OpenAPI 3.0**
+
+## Запуск приложения
+
+### Предварительные требования
+- Docker и Docker Compose
+- Java 17 (для локального запуска без Docker)
+
+### Запуск с Docker Compose
+1. Клонируйте репозиторий:
+   ```bash
+   git clone <repository-url>
+   cd java-explore-with-me
+   ```
+
+2. Запустите сервисы:
+   ```bash
+   docker-compose up --build
+   ```
+
+   Это запустит:
+   - Основной сервис на `http://localhost:8080`
+   - Сервис статистики на `http://localhost:9090`
+   - Базы данных PostgreSQL на портах 5432 и 5433
+
+3. Остановите сервисы:
+   ```bash
+   docker-compose down
+   ```
+
+### Локальный запуск
+1. Установите PostgreSQL и создайте базы данных:
+   - `explore_with_me_main` для основного сервиса
+   - `explore_with_me_stats` для сервиса статистики
+
+2. Соберите проект:
+   ```bash
+   mvn clean install
+   ```
+
+3. Запустите сервисы:
+   - Stats Service: `java -jar ewm-stats-service/target/ewm-stats-service-0.0.1-SNAPSHOT.jar`
+   - Main Service: `java -jar ewm-main-service/target/ewm-main-service-0.0.1-SNAPSHOT.jar`
+
+## API Документация
+- Спецификация основного сервиса: [ewm-main-service-spec.json](ewm-main-service-spec.json)
+- Спецификация сервиса статистики: [ewm-stats-service-spec.json](ewm-stats-service-spec.json)
+- **Swagger UI**: После запуска приложения доступен по `http://localhost:8080/swagger-ui/index.html`
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+
+Основные эндпоинты:
+- **Публичный API**: `/categories`, `/compilations`, `/events`
+- **Закрытый API**: `/users/{userId}/events`, `/users/{userId}/requests`
+- **Админ API**: `/admin/categories`, `/admin/events`, `/admin/users`, `/admin/compilations`
+- **Статистика**: `/hit` (POST), `/stats` (GET)
+
 ## Структура проекта
 
 explore-with-me/                                  # КОРНЕВОЙ ПРОЕКТ (родительский модуль)  

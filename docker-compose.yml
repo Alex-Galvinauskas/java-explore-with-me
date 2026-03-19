@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # База данных для основного сервиса
   main-db:
-    image: postgres:16-alpine
+    image: postgis/postgis:latest
     container_name: explore-with-me-main-db
     ports:
       - "5432:5432"
@@ -23,7 +23,7 @@ services:
 
   # База данных для сервиса статистики
   stats-db:
-    image: postgres:16-alpine
+    image: postgis/postgis:latest
     container_name: explore-with-me-stats-db
     ports:
       - "5433:5432"

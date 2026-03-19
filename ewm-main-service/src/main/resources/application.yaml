@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ewm-main
-    username: ewm-user
-    password: ewm-password
+    url: jdbc:postgresql://main-db:5432/explore_with_me_main
+    username: main_user
+    password: main_password
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -10,7 +10,6 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
         format_sql: true
         jdbc:
           batch_size: 20
