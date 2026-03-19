@@ -3,6 +3,7 @@ package ru.practicum.main.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import ru.practicum.main.model.BaseEntity;
+
 import java.util.List;
 
 @NoRepositoryBean

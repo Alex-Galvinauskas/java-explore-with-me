@@ -15,13 +15,17 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.practicum.main.controller.StatsController;
 import ru.practicum.main.dto.EndpointHit;
 import ru.practicum.main.service.StatsService;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import static org.mockito.ArgumentMatchers.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class ErrorHandlerTest {

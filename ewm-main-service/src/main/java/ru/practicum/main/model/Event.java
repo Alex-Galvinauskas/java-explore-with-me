@@ -3,6 +3,7 @@ package ru.practicum.main.model;
 import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.main.model.enums.EventState;
+
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

@@ -11,7 +11,6 @@ import ru.practicum.main.dto.user.NewUserRequest;
 import ru.practicum.main.dto.user.UserDto;
 import ru.practicum.main.service.user.UserService;
 
-
 import java.util.List;
 
 @Validated

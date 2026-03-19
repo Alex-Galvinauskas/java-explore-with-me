@@ -16,7 +16,6 @@ import ru.practicum.main.model.Category;
 import ru.practicum.main.repository.CategoryRepository;
 import ru.practicum.main.repository.EventRepository;
 
-
 import java.util.List;
 import java.util.stream.Collectors;
 

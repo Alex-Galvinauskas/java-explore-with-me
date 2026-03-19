@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.dto.category.CategoryDto;
 import ru.practicum.main.service.category.CategoryService;
+
 import java.util.List;
 
 @Validated
