@@ -1,10 +1,12 @@
 package ru.practicum.stats.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -99,6 +101,50 @@ public class ErrorHandler {
                 .message(e.getMessage())
                 .timestamp(LocalDateTime.now().format(FORMATTER))
                 .errors(List.of())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingServletRequestParameterException(
+            final MissingServletRequestParameterException e) {
+        log.error("Отсутствует обязательный параметр запроса: {}", e.getMessage());
+
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message(String.format("Required parameter '%s' is missing", e.getParameterName()))
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .errors(List.of(e.getClass().getName()))
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleHttpMessageNotReadableException(
+            final HttpMessageNotReadableException e) {
+        log.error("Некорректный формат JSON: {}", e.getMessage());
+
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message("Malformed JSON request")
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .errors(List.of(e.getClass().getName()))
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleValidationException(final ValidationException e) {
+        log.error("Ошибка валидации: {}", e.getMessage());
+
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .errors(List.of(e.getClass().getName()))
                 .build();
     }
 
