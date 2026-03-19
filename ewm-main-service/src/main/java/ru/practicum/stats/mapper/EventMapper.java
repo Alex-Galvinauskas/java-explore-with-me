@@ -5,7 +5,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 import ru.practicum.stats.dto.event.*;
 import ru.practicum.stats.model.Event;
-import java.time.LocalDateTime;
 
 @Mapper(componentModel = "spring", uses = {CategoryMapper.class, UserMapper.class, LocationMapper.class})
 public interface EventMapper {
