@@ -103,9 +103,7 @@ public class EventUpdater {
             throw new ConflictException("Нельзя опубликовать событие в статусе " + event.getState());
         }
 
-        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new ConflictException("Дата события должна быть не раньше чем через 1 час от текущего момента");
-        }
+        validator.validateEventDateNotInPast(event.getEventDate(), 1);
 
         event.setPublishedOn(LocalDateTime.now());
         return EventState.PUBLISHED;
