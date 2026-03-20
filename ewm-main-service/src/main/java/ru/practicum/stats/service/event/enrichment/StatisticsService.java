@@ -46,23 +46,30 @@ public class StatisticsService {
     }
 
     public Map<Long, Long> getViewsForEvents(List<Long> eventIds) {
-        if (eventIds.isEmpty()) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            log.debug("Пустой список eventIds для получения просмотров");
             return Collections.emptyMap();
         }
 
         try {
             List<String> uris = buildEventUris(eventIds);
+
+            if (uris.isEmpty()) {
+                log.debug("Пустой список uris для получения просмотров");
+                return Collections.emptyMap();
+            }
+
             List<ViewStats> stats = fetchStatsForUris(uris);
 
             return stats.stream()
-                    .filter(stat -> stat.getUri() != null && stat.getUri().startsWith("/events/"))
+                    .filter(stat -> stat != null && stat.getUri() != null && stat.getUri().startsWith("/events/"))
                     .collect(Collectors.toMap(
                             stat -> extractEventId(stat.getUri()),
                             ViewStats::getHits,
                             (v1, v2) -> v1
                     ));
         } catch (Exception e) {
-            log.error("Ошибка при получении статистики для списка событий: {}", e.getMessage());
+            log.error("Ошибка при получении статистики для списка событий: {}", e.getMessage(), e);
             return Collections.emptyMap();
         }
     }
@@ -83,15 +90,31 @@ public class StatisticsService {
     }
 
     private List<ViewStats> fetchStatsForUris(List<String> uris) {
-        LocalDateTime start = LocalDateTime.now().minusYears(10);
-        LocalDateTime end = LocalDateTime.now();
-        return statsClient.getStats(start, end, uris, false);
+        try {
+            if (uris == null || uris.isEmpty()) {
+                log.debug("Пустой список uris для запроса статистики");
+                return Collections.emptyList();
+            }
+
+            LocalDateTime start = LocalDateTime.now().minusYears(10);
+            LocalDateTime end = LocalDateTime.now();
+
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
+
+            return stats != null ? stats : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Ошибка при запросе статистики для uris {}: {}", uris, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     private Long extractEventId(String uri) {
         try {
             String[] parts = uri.split("/");
-            return Long.parseLong(parts[parts.length - 1]);
+            if (parts.length > 0) {
+                return Long.parseLong(parts[parts.length - 1]);
+            }
+            return -1L;
         } catch (Exception e) {
             log.error("Ошибка при извлечении ID события из URI: {}", uri);
             return -1L;

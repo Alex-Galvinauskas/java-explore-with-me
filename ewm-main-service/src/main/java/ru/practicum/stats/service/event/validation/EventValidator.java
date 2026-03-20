@@ -61,7 +61,7 @@ public class EventValidator {
     public void validateEventDateNotInPast(LocalDateTime eventDate, int minHoursFromNow) {
         LocalDateTime minAllowedDate = LocalDateTime.now().plusHours(minHoursFromNow);
         if (eventDate.isBefore(minAllowedDate)) {
-            throw new ConflictException(
+            throw new ValidationException(
                     String.format("Дата события должна быть не раньше чем через %d часа(ов) от текущего момента",
                             minHoursFromNow)
             );
