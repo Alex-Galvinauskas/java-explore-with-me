@@ -139,8 +139,7 @@ public class EventServiceImpl implements EventService {
         eventUpdater.updateCategoryIfNeeded(event, request.getCategory());
 
         if (request.getEventDate() != null) {
-            LocalDateTime newEventDate = validator.parseDate(request.getEventDate());
-            validator.validateAdminEventDateUpdate(event, newEventDate);
+            LocalDateTime newEventDate = validator.parseAndValidateEventDateForAdmin(request.getEventDate(), 1);
             event.setEventDate(newEventDate);
         }
 
@@ -205,13 +204,16 @@ public class EventServiceImpl implements EventService {
 
         validator.validateUserIsInitiator(event, userId);
 
+        LocalDateTime newEventDate = null;
+        if (request.getEventDate() != null) {
+            newEventDate = validator.parseAndValidateEventDate(request.getEventDate(), 2);
+        }
+
         validator.validateEventNotPublished(event);
 
         eventUpdater.updateCategoryIfNeeded(event, request.getCategory());
 
-        if (request.getEventDate() != null) {
-            LocalDateTime newEventDate = validator.parseAndValidateEventDate(request.getEventDate(),
-                    2);
+        if (newEventDate != null) {
             event.setEventDate(newEventDate);
         }
 

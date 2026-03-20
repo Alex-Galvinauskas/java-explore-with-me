@@ -58,10 +58,26 @@ public class EventValidator {
         return eventDate;
     }
 
+    public LocalDateTime parseAndValidateEventDateForAdmin(String dateString, int minHoursFromNow) {
+        LocalDateTime eventDate = parseDate(dateString);
+        validateAdminEventDateNotInPast(eventDate, minHoursFromNow);
+        return eventDate;
+    }
+
     public void validateEventDateNotInPast(LocalDateTime eventDate, int minHoursFromNow) {
         LocalDateTime minAllowedDate = LocalDateTime.now().plusHours(minHoursFromNow);
         if (eventDate.isBefore(minAllowedDate)) {
             throw new ValidationException(
+                    String.format("Дата события должна быть не раньше чем через %d часа(ов) от текущего момента",
+                            minHoursFromNow)
+            );
+        }
+    }
+
+    public void validateAdminEventDateNotInPast(LocalDateTime eventDate, int minHoursFromNow) {
+        LocalDateTime minAllowedDate = LocalDateTime.now().plusHours(minHoursFromNow);
+        if (eventDate.isBefore(minAllowedDate)) {
+            throw new ConflictException(
                     String.format("Дата события должна быть не раньше чем через %d часа(ов) от текущего момента",
                             minHoursFromNow)
             );
