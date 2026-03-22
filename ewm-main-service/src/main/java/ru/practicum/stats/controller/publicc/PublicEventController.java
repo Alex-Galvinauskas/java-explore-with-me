@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +12,13 @@ import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.service.event.EventSearchParams;
 import ru.practicum.stats.service.event.EventService;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Validated
 @RestController
-@RequestMapping("/events")
+@RequestMapping(path = "/events")
 @RequiredArgsConstructor
 public class PublicEventController {
 
@@ -34,13 +33,9 @@ public class PublicEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(defaultValue = "EVENT_DATE") String sort,
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size,
+            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+            @RequestParam(defaultValue = "10") @Positive Integer size,
             HttpServletRequest request) {
-
-        log.info("GET /events с параметрами: text={}, categories={}, paid={}, rangeStart={}, " +
-                        "rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
         EventSearchParams params = EventSearchParams.builder()
                 .text(text)
@@ -58,8 +53,7 @@ public class PublicEventController {
     }
 
     @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
-        log.info("GET /events/{}", id);
+    public EventFullDto getEvent(@PathVariable @Positive Long id, HttpServletRequest request) {
         return eventService.getEvent(id, request);
     }
 }

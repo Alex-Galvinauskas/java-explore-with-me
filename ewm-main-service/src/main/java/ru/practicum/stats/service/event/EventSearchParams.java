@@ -2,6 +2,8 @@ package ru.practicum.stats.service.event;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import ru.practicum.stats.model.enums.EventState;
 
 import java.time.LocalDateTime;
@@ -9,6 +11,8 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventSearchParams {
     private String text;
     private List<Long> categories;

@@ -29,34 +29,47 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     @Transactional
-    public void hit(EndpointHit hitDto) {
+    public EndpointHit hit(EndpointHit hitDto) {
         log.info("Сохранение информации о запросе: {}", hitDto);
+
+        if (hitDto.getTimestamp() == null) {
+            hitDto.setTimestamp(LocalDateTime.now());
+        }
 
         validateHitDto(hitDto);
 
         EndpointHitEntity entity = statsMapper.toEntity(hitDto);
 
+        // Убеждаемся, что timestamp установлен
         if (entity.getTimestamp() == null) {
             entity.setTimestamp(LocalDateTime.now());
-            log.debug("Timestamp не указан, установлено текущее время: {}", entity.getTimestamp());
         }
 
+        // Сохраняем и получаем сохраненную сущность с id
         EndpointHitEntity savedEntity = statsRepository.save(entity);
         log.info("Информация о запросе успешно сохранена с id: {}", savedEntity.getId());
+
+        // Возвращаем DTO с заполненным id
+        return statsMapper.toDto(savedEntity);
     }
 
-
     @Override
-    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        log.info("Запрос статистики: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+    @Transactional(readOnly = true)
+    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end,
+                                    List<String> uris, boolean unique) {
+        log.info("Getting stats: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
 
         validateDates(start, end);
 
-        List<String> uriList = (uris != null && uris.isEmpty()) ? null : uris;
+        // Если uris == null или пустой, возвращаем всю статистику
+        if (uris == null || uris.isEmpty()) {
+            return statsRepository.getStatsAll(start, end, unique);
+        }
 
-        List<ViewStats> stats = statsRepository.getStats(start, end, uriList, unique);
+        // Иначе фильтруем по uris (uris не null и не пустой)
+        List<ViewStats> stats = statsRepository.getStats(start, end, uris, unique);
 
-        log.info("Получено {} записей статистики", stats.size());
+        log.info("Found {} stats records for uris: {}", stats.size(), uris);
         return stats;
     }
 

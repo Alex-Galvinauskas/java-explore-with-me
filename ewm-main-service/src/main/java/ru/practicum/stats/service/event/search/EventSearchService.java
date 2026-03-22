@@ -10,6 +10,7 @@ import ru.practicum.stats.model.enums.EventState;
 import ru.practicum.stats.repository.EventRepository;
 import ru.practicum.stats.service.event.EventSearchParams;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -21,15 +22,29 @@ public class EventSearchService {
     private final EventSearchParamsProcessor paramsProcessor;
 
     public List<Event> findPublishedEvents(EventSearchParams params, Pageable pageable) {
-        EventSearchParams preparedParams = paramsProcessor.preparePublicSearchParams(params);
+        EventSearchParams preparedParams = params;
+        if (preparedParams.getRangeStart() == null || preparedParams.getRangeEnd() == null) {
+            preparedParams = paramsProcessor.preparePublicSearchParams(params);
+        }
 
+        LocalDateTime rangeStart = preparedParams.getRangeStart();
+        LocalDateTime rangeEnd = preparedParams.getRangeEnd();
+
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now();
+        }
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(100);
+        }
+
+        // ← Исправление: передаем строковое значение "PUBLISHED"
         return eventRepository.findPublishedEvents(
-                EventState.PUBLISHED,
+                EventState.PUBLISHED.name(),  // ← .name() возвращает "PUBLISHED"
                 preparedParams.getText(),
                 preparedParams.getCategories(),
                 preparedParams.getPaid(),
-                preparedParams.getRangeStart(),
-                preparedParams.getRangeEnd(),
+                rangeStart,
+                rangeEnd,
                 preparedParams.getOnlyAvailable() != null ? preparedParams.getOnlyAvailable() : false,
                 pageable
         );
@@ -42,12 +57,22 @@ public class EventSearchService {
     public List<Event> findEventsByAdmin(EventSearchParams params, Pageable pageable) {
         EventSearchParams preparedParams = paramsProcessor.prepareAdminSearchParams(params);
 
+        LocalDateTime rangeStart = preparedParams.getRangeStart();
+        LocalDateTime rangeEnd = preparedParams.getRangeEnd();
+
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now().minusYears(100);
+        }
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(100);
+        }
+
         return eventRepository.findEventsByAdmin(
                 preparedParams.getUsers(),
                 preparedParams.getStates(),
                 preparedParams.getCategories(),
-                preparedParams.getRangeStart(),
-                preparedParams.getRangeEnd(),
+                rangeStart,
+                rangeEnd,
                 pageable
         );
     }

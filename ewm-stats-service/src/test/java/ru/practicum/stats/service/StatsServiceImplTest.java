@@ -30,16 +30,16 @@ class StatsServiceImplTest {
     private StatsMapper statsMapper;
     @InjectMocks
     private StatsServiceImpl statsService;
-    private LocalDateTime now;
     private LocalDateTime start;
     private LocalDateTime end;
     private EndpointHit hitDto;
     private EndpointHitEntity hitEntity;
+    private EndpointHit savedHitDto;
     private ViewStats viewStats;
 
     @BeforeEach
     void setUp() {
-        now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         start = now.minusDays(1);
         end = now.plusDays(1);
         hitDto = EndpointHit.builder()
@@ -49,6 +49,13 @@ class StatsServiceImplTest {
                 .timestamp(now)
                 .build();
         hitEntity = EndpointHitEntity.builder()
+                .id(1L)
+                .app("ewm-main-service")
+                .uri("/events/1")
+                .ip("192.168.1.1")
+                .timestamp(now)
+                .build();
+        savedHitDto = EndpointHit.builder()
                 .id(1L)
                 .app("ewm-main-service")
                 .uri("/events/1")
@@ -66,9 +73,15 @@ class StatsServiceImplTest {
     void shouldSaveHit() {
         when(statsMapper.toEntity(hitDto)).thenReturn(hitEntity);
         when(statsRepository.save(any(EndpointHitEntity.class))).thenReturn(hitEntity);
-        statsService.hit(hitDto);
+        when(statsMapper.toDto(hitEntity)).thenReturn(savedHitDto);
+
+        EndpointHit result = statsService.hit(hitDto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
         verify(statsMapper, times(1)).toEntity(hitDto);
         verify(statsRepository, times(1)).save(hitEntity);
+        verify(statsMapper, times(1)).toDto(hitEntity);
     }
 
     @Test
@@ -78,19 +91,39 @@ class StatsServiceImplTest {
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .build();
+
         EndpointHitEntity entityWithoutTimestamp = EndpointHitEntity.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")
                 .build();
-        when(statsMapper.toEntity(hitWithoutTimestamp)).thenReturn(entityWithoutTimestamp);
-        when(statsRepository.save(any(EndpointHitEntity.class)))
-                .thenAnswer(invocation -> {
-                    EndpointHitEntity saved = invocation.getArgument(0);
-                    saved.setId(1L);
-                    return saved;
-                });
-        statsService.hit(hitWithoutTimestamp);
+
+        EndpointHitEntity savedEntity = EndpointHitEntity.builder()
+                .id(1L)
+                .app("ewm-main-service")
+                .uri("/events/1")
+                .ip("192.168.1.1")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        EndpointHit expectedResult = EndpointHit.builder()
+                .id(1L)
+                .app("ewm-main-service")
+                .uri("/events/1")
+                .ip("192.168.1.1")
+                .timestamp(savedEntity.getTimestamp())
+                .build();
+
+        when(statsMapper.toEntity(any(EndpointHit.class))).thenReturn(entityWithoutTimestamp);
+        when(statsRepository.save(any(EndpointHitEntity.class))).thenReturn(savedEntity);
+        when(statsMapper.toDto(any(EndpointHitEntity.class))).thenReturn(expectedResult);
+
+        EndpointHit result = statsService.hit(hitWithoutTimestamp);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getTimestamp()).isNotNull();
+
         verify(statsRepository).save(argThat(entity ->
                 entity.getTimestamp() != null &&
                         entity.getTimestamp().isBefore(LocalDateTime.now().plusSeconds(1))
@@ -102,10 +135,11 @@ class StatsServiceImplTest {
         List<String> uris = List.of("/events/1", "/events/2");
         List<ViewStats> expectedStats = List.of(viewStats);
         when(statsRepository.getStats(start, end, uris, false)).thenReturn(expectedStats);
+
         List<ViewStats> actualStats = statsService.getStats(start, end, uris, false);
+
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1))
-                .getStats(start, end, uris, false);
+        verify(statsRepository, times(1)).getStats(start, end, uris, false);
     }
 
     @Test
@@ -113,17 +147,20 @@ class StatsServiceImplTest {
         List<String> emptyUris = List.of();
         List<ViewStats> expectedStats = List.of(viewStats);
         when(statsRepository.getStats(start, end, null, false)).thenReturn(expectedStats);
+
         List<ViewStats> actualStats = statsService.getStats(start, end, emptyUris, false);
+
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1))
-                .getStats(start, end, null, false);
+        verify(statsRepository, times(1)).getStats(start, end, null, false);
     }
 
     @Test
     void shouldGetAllStats() {
         List<ViewStats> expectedStats = List.of(viewStats);
         when(statsRepository.getStatsAll(start, end, false)).thenReturn(expectedStats);
+
         List<ViewStats> actualStats = statsService.getStatsAll(start, end, false);
+
         assertThat(actualStats).isEqualTo(expectedStats);
         verify(statsRepository, times(1)).getStatsAll(start, end, false);
     }
@@ -157,16 +194,19 @@ class StatsServiceImplTest {
     void shouldHandleNullUris() {
         List<ViewStats> expectedStats = List.of(viewStats);
         when(statsRepository.getStats(start, end, null, true)).thenReturn(expectedStats);
+
         List<ViewStats> actualStats = statsService.getStats(start, end, null, true);
+
         assertThat(actualStats).isEqualTo(expectedStats);
-        verify(statsRepository, times(1))
-                .getStats(start, end, null, true);
+        verify(statsRepository, times(1)).getStats(start, end, null, true);
     }
 
     @Test
     void shouldHandleEmptyStatsList() {
         when(statsRepository.getStats(start, end, null, false)).thenReturn(List.of());
+
         List<ViewStats> actualStats = statsService.getStats(start, end, null, false);
+
         assertThat(actualStats).isEmpty();
     }
 }

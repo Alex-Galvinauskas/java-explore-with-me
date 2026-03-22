@@ -12,7 +12,6 @@ public class PaginationValidator {
 
     private static final int DEFAULT_FROM = 0;
     private static final int DEFAULT_SIZE = 10;
-    private static final int MAX_SIZE = 1000;
 
     /**
      * Валидация параметров пагинации
@@ -23,9 +22,6 @@ public class PaginationValidator {
         }
         if (size <= 0) {
             throw new ValidationException("Параметр 'size' должен быть положительным. Получено: " + size);
-        }
-        if (size > MAX_SIZE) {
-            throw new ValidationException("Параметр 'size' не может превышать " + MAX_SIZE + ". Получено: " + size);
         }
     }
 

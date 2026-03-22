@@ -33,6 +33,14 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto addCategory(NewCategoryDto newCategoryDto) {
         log.info("Добавление новой категории: {}", newCategoryDto.getName());
 
+        // ✅ Добавляем предварительную проверку
+        categoryRepository.findByName(newCategoryDto.getName())
+                .ifPresent(category -> {
+                    throw new ConflictException(
+                            String.format("Категория с именем '%s' уже существует", newCategoryDto.getName())
+                    );
+                });
+
         Category category = categoryMapper.toEntity(newCategoryDto);
 
         try {
@@ -42,11 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (DataIntegrityViolationException e) {
             String message = String.format("Категория с именем '%s' уже существует", newCategoryDto.getName());
             log.warn(message, e);
-
-            if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
-                throw new ConflictException(message);
-            }
-            throw new ConflictException("Ошибка при создании категории: " + e.getMessage());
+            throw new ConflictException(message);
         }
     }
 
@@ -63,6 +67,16 @@ public class CategoryServiceImpl implements CategoryService {
             return categoryMapper.toDto(category);
         }
 
+        // ✅ Проверяем, что новое имя не занято другой категорией
+        categoryRepository.findByName(categoryDto.getName())
+                .ifPresent(existingCategory -> {
+                    if (!existingCategory.getId().equals(catId)) {
+                        throw new ConflictException(
+                                String.format("Категория с именем '%s' уже существует", categoryDto.getName())
+                        );
+                    }
+                });
+
         category.setName(categoryDto.getName());
 
         try {
@@ -72,11 +86,7 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (DataIntegrityViolationException e) {
             String message = String.format("Категория с именем '%s' уже существует", categoryDto.getName());
             log.warn(message, e);
-
-            if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
-                throw new ConflictException(message);
-            }
-            throw new ConflictException("Ошибка при обновлении категории: " + e.getMessage());
+            throw new ConflictException(message);
         }
     }
 

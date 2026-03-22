@@ -190,4 +190,43 @@ public class ErrorHandler {
         String message = error.getDefaultMessage();
         return String.format("%s: %s", field, message);
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(NotFoundException ex) {
+        log.error("Не найдено: {}", ex.getMessage());
+
+        ApiError apiError = ApiError.of(
+                HttpStatus.NOT_FOUND,
+                "Объект не найден",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(ConflictException ex) {
+        log.error("Конфликт: {}", ex.getMessage());
+
+        ApiError apiError = ApiError.of(
+                HttpStatus.CONFLICT,
+                "Конфликт данных",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiError> handleValidation(ValidationException ex) {
+        log.error("Ошибка валидации: {}", ex.getMessage());
+
+        ApiError apiError = ApiError.of(
+                HttpStatus.BAD_REQUEST,
+                "Ошибка валидации",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
 }

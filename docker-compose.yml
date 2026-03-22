@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # База данных для основного сервиса
   main-db:
@@ -50,14 +48,17 @@ services:
     ports:
       - "9090:9090"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/explore_with_me_stats
-      - SPRING_DATASOURCE_USERNAME=stats_user
-      - SPRING_DATASOURCE_PASSWORD=stats_password
+      - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=9090
     depends_on:
       stats-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     networks:
       - explore-with-me-network
 
@@ -70,17 +71,14 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/explore_with_me_main
-      - SPRING_DATASOURCE_USERNAME=main_user
-      - SPRING_DATASOURCE_PASSWORD=main_password
-      - STATS_SERVICE_URL=http://stats-service:9090
+      - SPRING_PROFILES_ACTIVE=docker
+      - STATS_SERVER_URL=http://stats-service:9090
       - SERVER_PORT=8080
     depends_on:
       main-db:
         condition: service_healthy
       stats-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - explore-with-me-network
 

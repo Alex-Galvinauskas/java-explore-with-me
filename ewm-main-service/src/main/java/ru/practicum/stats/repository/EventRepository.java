@@ -19,21 +19,22 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByInitiatorId(Long userId, Pageable pageable);
 
-    @Query("SELECT e FROM Event e " +
+    @Query(value = "SELECT * FROM events e " +
             "WHERE e.state = :state " +
-            "AND (:text IS NULL OR " +
+            "AND (cast(:text as text) IS NULL OR " +
             "   (LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR " +
             "    LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (e.eventDate >= :rangeStart) " +
-            "AND (e.eventDate <= :rangeEnd) " +
+            "AND (cast(:categories as text) IS NULL OR " +
+            "   e.category_id IN (:categories)) " +  // ← Убираем CAST, сравниваем напрямую
+            "AND (cast(:paid as boolean) IS NULL OR e.paid = :paid) " +
+            "AND (e.event_date >= :rangeStart) " +
+            "AND (e.event_date <= :rangeEnd) " +
             "AND (:onlyAvailable = false OR " +
-            "   e.participantLimit = 0 OR " +
-            "   e.confirmedRequests < e.participantLimit) " +
-            "ORDER BY e.eventDate ASC")
+            "   e.participant_limit = 0 OR " +
+            "   e.confirmed_requests < e.participant_limit) " +
+            "ORDER BY e.event_date ASC", nativeQuery = true)
     List<Event> findPublishedEvents(
-            @Param("state") EventState state,
+            @Param("state") String state,
             @Param("text") String text,
             @Param("categories") List<Long> categories,
             @Param("paid") Boolean paid,
@@ -44,33 +45,11 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     @Query("SELECT e FROM Event e " +
-            "WHERE e.state = :state " +
-            "AND (:text IS NULL OR " +
-            "   (LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR " +
-            "    LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (e.eventDate >= :rangeStart) " +
-            "AND (e.eventDate <= :rangeEnd) " +
-            "AND (:onlyAvailable = false OR " +
-            "   e.participantLimit = 0 OR " +
-            "   e.confirmedRequests < e.participantLimit)")
-    List<Event> findPublishedEvents(
-            @Param("state") EventState state,
-            @Param("text") String text,
-            @Param("categories") List<Long> categories,
-            @Param("paid") Boolean paid,
-            @Param("rangeStart") LocalDateTime rangeStart,
-            @Param("rangeEnd") LocalDateTime rangeEnd,
-            @Param("onlyAvailable") Boolean onlyAvailable
-    );
-
-    @Query("SELECT e FROM Event e " +
             "WHERE (:users IS NULL OR e.initiator.id IN :users) " +
             "AND (:states IS NULL OR e.state IN :states) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (CAST(:rangeStart AS date) IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (CAST(:rangeEnd AS date) IS NULL OR e.eventDate <= :rangeEnd)")
+            "AND (e.eventDate >= :rangeStart) " +
+            "AND (e.eventDate <= :rangeEnd)")
     List<Event> findEventsByAdmin(
             @Param("users") List<Long> users,
             @Param("states") List<EventState> states,

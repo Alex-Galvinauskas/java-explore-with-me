@@ -14,7 +14,7 @@ import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping("/compilations")
+@RequestMapping(path = "/compilations")
 @RequiredArgsConstructor
 public class PublicCompilationController {
 
@@ -23,15 +23,15 @@ public class PublicCompilationController {
     @GetMapping
     public List<CompilationDto> getCompilations(
             @RequestParam(required = false) Boolean pinned,
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+            @RequestParam(defaultValue = "10") @Positive Integer size) {
 
         Pageable pageable = PageRequest.of(from / size, size);
         return compilationService.getCompilations(pinned, pageable);
     }
 
     @GetMapping("/{compId}")
-    public CompilationDto getCompilation(@PathVariable Long compId) {
+    public CompilationDto getCompilation(@PathVariable @Positive Long compId) {
         return compilationService.getCompilation(compId);
     }
 }

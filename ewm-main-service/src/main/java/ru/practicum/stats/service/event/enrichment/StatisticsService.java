@@ -21,102 +21,108 @@ public class StatisticsService {
 
     private final StatsClient statsClient;
     private static final String APP_NAME = "ewm-main-service";
-    private static final long DEFAULT_VIEWS = 0L;
+    private static final LocalDateTime STATS_START =
+            LocalDateTime.of(2000, 1, 1, 0, 0, 0);
+    private static final LocalDateTime STATS_END =
+            LocalDateTime.of(2100, 1, 1, 0, 0, 0);
 
+    /**
+     * Сохранение хита (синхронно)
+     */
     public void saveHit(HttpServletRequest request) {
-        if (request == null) return;
+        if (request == null) {
+            return;
+        }
 
         try {
-            EndpointHit hit = buildEndpointHit(request);
-            statsClient.hit(hit);
-            log.debug("Сохранение просмотра: {}", hit);
+            EndpointHit hit = EndpointHit.builder()
+                    .app(APP_NAME)
+                    .uri(request.getRequestURI())
+                    .ip(getClientIp(request))
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            log.debug("Saving hit for URI: {}", hit.getUri());
+            statsClient.hitSync(hit);
         } catch (Exception e) {
-            log.error("Ошибка при сохранении статистики: {}", e.getMessage());
+            log.error("Error saving hit: {}", e.getMessage());
         }
     }
 
-    public Long getViewsForEvent(Long eventId) {
-        try {
-            List<ViewStats> stats = fetchStatsForUris(List.of("/events/" + eventId));
-            return stats.isEmpty() ? DEFAULT_VIEWS : stats.getFirst().getHits();
-        } catch (Exception e) {
-            log.error("Ошибка при получении статистики для события {}: {}", eventId, e.getMessage());
-            return DEFAULT_VIEWS;
-        }
-    }
-
+    /**
+     * Получение просмотров для списка событий
+     */
     public Map<Long, Long> getViewsForEvents(List<Long> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
         try {
-            List<String> uris = buildEventUris(eventIds);
-            if (uris.isEmpty()) {
-                return Collections.emptyMap();
+            List<String> uris = eventIds.stream()
+                    .map(id -> "/events/" + id)
+                    .collect(Collectors.toList());
+
+            // ✅ Добавляем проверку порядка дат
+            LocalDateTime start = STATS_START;
+            LocalDateTime end = STATS_END;
+
+            if (start.isAfter(end)) {
+                log.warn("Start date {} is after end date {}, swapping them", start, end);
+                LocalDateTime temp = start;
+                start = end;
+                end = temp;
             }
 
-            List<ViewStats> stats = fetchStatsForUris(uris);
+            List<ViewStats> stats = statsClient.getStats(start, end, uris, true);
+
+            log.debug("Retrieved stats for {} events, got {} records", eventIds.size(), stats.size());
 
             return stats.stream()
-                    .filter(stat -> stat != null && stat.getUri() != null)
                     .collect(Collectors.toMap(
                             stat -> extractEventId(stat.getUri()),
                             ViewStats::getHits,
                             (v1, v2) -> v1
                     ));
         } catch (Exception e) {
-            log.error("Ошибка при получении статистики для списка событий: {}", e.getMessage(), e);
+            log.error("Error getting views for events: {}", e.getMessage());
             return Collections.emptyMap();
         }
     }
 
-    private List<ViewStats> fetchStatsForUris(List<String> uris) {
-        try {
-            LocalDateTime start = LocalDateTime.now().minusDays(30);
-            LocalDateTime end = LocalDateTime.now().plusMinutes(1);
-
-            List<ViewStats> stats = statsClient.getStats(start, end, uris, false);
-            return stats != null ? stats : Collections.emptyList();
-        } catch (Exception e) {
-            log.error("Ошибка при запросе статистики для uris {}: {}", uris, e.getMessage());
-            return Collections.emptyList();
-        }
+    /**
+     * Получение просмотров для одного события
+     */
+    public Long getViewsForEvent(Long eventId) {
+        return getViewsForEvents(List.of(eventId)).getOrDefault(eventId, 0L);
     }
 
-    private EndpointHit buildEndpointHit(HttpServletRequest request) {
-        return EndpointHit.builder()
-                .app(APP_NAME)
-                .uri(request.getRequestURI())
-                .ip(getClientIp(request))
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    private List<String> buildEventUris(List<Long> eventIds) {
-        return eventIds.stream()
-                .map(id -> "/events/" + id)
-                .collect(Collectors.toList());
-    }
-
+    /**
+     * Извлечение ID события из URI
+     */
     private Long extractEventId(String uri) {
         try {
             String[] parts = uri.split("/");
-            if (parts.length > 0) {
-                return Long.parseLong(parts[parts.length - 1]);
-            }
-            return -1L;
+            return Long.parseLong(parts[parts.length - 1]);
         } catch (Exception e) {
-            log.error("Ошибка при извлечении ID события из URI: {}", uri);
+            log.warn("Failed to extract event ID from URI: {}", uri);
             return -1L;
         }
     }
 
+    /**
+     * Получение реального IP клиента с учетом прокси
+     */
     private String getClientIp(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+
         return request.getRemoteAddr();
     }
 }

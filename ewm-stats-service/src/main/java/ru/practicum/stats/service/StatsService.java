@@ -15,8 +15,9 @@ public interface StatsService {
     /**
      * Сохранение информации о запросе к эндпоинту
      * @param hitDto DTO с информацией о запросе
+     * @return сохраненный EndpointHit с заполненным id
      */
-    void hit(EndpointHit hitDto);
+    EndpointHit hit(EndpointHit hitDto);
 
     /**
      * Получение статистики по посещениям

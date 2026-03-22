@@ -96,16 +96,6 @@ public class EventValidator {
         }
     }
 
-    public void validateAdminEventDateUpdate(Event event, LocalDateTime newDate) {
-        if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new ConflictException("Дата события должна быть не раньше чем через 1 час от текущего момента");
-        }
-
-        if (event.getState() == EventState.PUBLISHED && newDate.isBefore(event.getEventDate())) {
-            throw new ConflictException("Дата опубликованного события не может быть изменена на более раннюю");
-        }
-    }
-
     public void validateParticipantLimit(Integer limit) {
         if (limit != null && limit < 0) {
             throw new ValidationException("Лимит участников не может быть отрицательным");

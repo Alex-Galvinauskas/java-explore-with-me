@@ -63,11 +63,14 @@ class StatsControllerTest {
 
     @Test
     void shouldSaveHit() throws Exception {
-        doNothing().when(statsService).hit(any(EndpointHit.class));
+        // Метод hit теперь возвращает EndpointHit, а не void
+        when(statsService.hit(any(EndpointHit.class))).thenReturn(hitDto);
+
         mockMvc.perform(post("/hit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(hitDto)))
                 .andExpect(status().isCreated());
+
         verify(statsService, times(1)).hit(any(EndpointHit.class));
     }
 
@@ -106,8 +109,8 @@ class StatsControllerTest {
                 .andExpect(jsonPath("$[0].hits").value(5));
         verify(statsService, times(1))
                 .getStats(any(LocalDateTime.class),
-                any(LocalDateTime.class),
-                eq(List.of("/events/1")), eq(false));
+                        any(LocalDateTime.class),
+                        eq(List.of("/events/1")), eq(false));
     }
 
     @Test
@@ -124,7 +127,7 @@ class StatsControllerTest {
                 .andExpect(status().isOk());
         verify(statsService, times(1))
                 .getStats(any(LocalDateTime.class),
-                any(LocalDateTime.class), isNull(), eq(false));
+                        any(LocalDateTime.class), isNull(), eq(false));
     }
 
     @Test

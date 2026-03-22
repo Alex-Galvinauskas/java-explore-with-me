@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.stats.dto.event.NewEventDto;
 import ru.practicum.stats.mapper.EventMapper;
-import ru.practicum.stats.mapper.LocationMapper;
 import ru.practicum.stats.model.Category;
 import ru.practicum.stats.model.Event;
 import ru.practicum.stats.model.User;
@@ -17,7 +16,6 @@ import java.time.LocalDateTime;
 public class EventBuilder {
 
     private final EventMapper eventMapper;
-    private final LocationMapper locationMapper;
     private static final long DEFAULT_CONFIRMED_REQUESTS = 0L;
     private static final long DEFAULT_VIEWS = 0L;
 
@@ -27,8 +25,11 @@ public class EventBuilder {
         event.setCategory(category);
         event.setState(EventState.PENDING);
         event.setCreatedOn(LocalDateTime.now());
+
+        // Устанавливаем координаты напрямую
         if (dto.getLocation() != null) {
-            event.setLocation(locationMapper.toEntity(dto.getLocation()));
+            event.setLat(dto.getLocation().getLat());
+            event.setLon(dto.getLocation().getLon());
         }
 
         setDefaultFields(event);

@@ -20,7 +20,7 @@ public class Event implements BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "annotation", nullable = false, length = 2000)
+    @Column(name = "annotation", nullable = false, columnDefinition = "TEXT")
     private String annotation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,7 +34,7 @@ public class Event implements BaseEntity {
     @Column(name = "created_on", nullable = false)
     private LocalDateTime createdOn;
 
-    @Column(name = "description", nullable = false, length = 7000)
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "event_date", nullable = false)
@@ -46,6 +46,29 @@ public class Event implements BaseEntity {
 
     @Embedded
     private Location location;
+
+    // Добавляем удобные методы для работы с координатами
+    public void setLat(Float lat) {
+        if (this.location == null) {
+            this.location = new Location();
+        }
+        this.location.setLat(lat);
+    }
+
+    public Float getLat() {
+        return this.location != null ? this.location.getLat() : null;
+    }
+
+    public void setLon(Float lon) {
+        if (this.location == null) {
+            this.location = new Location();
+        }
+        this.location.setLon(lon);
+    }
+
+    public Float getLon() {
+        return this.location != null ? this.location.getLon() : null;
+    }
 
     @Column(name = "paid", nullable = false)
     private Boolean paid;

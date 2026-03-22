@@ -2,6 +2,7 @@ package ru.practicum.stats.service.compilation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,15 +105,16 @@ public class CompilationServiceImpl implements CompilationService {
     public List<CompilationDto> getCompilations(Boolean pinned, Pageable pageable) {
         log.info("Получение подборок с фильтром pinned: {}, pageable: {}", pinned, pageable);
 
-        List<Compilation> compilations;
+        Page<Compilation> compilationPage;
+
         if (pinned == null) {
-            compilations = compilationRepository.findAll(pageable).getContent();
+            compilationPage = compilationRepository.findAll(pageable);
         } else {
-            compilations = compilationRepository.findAll(pageable).getContent()
-                    .stream()
-                    .filter(c -> c.getPinned().equals(pinned))
-                    .collect(Collectors.toList());
+            // ✅ Используем правильный метод репозитория
+            compilationPage = compilationRepository.findByPinned(pinned, pageable);
         }
+
+        List<Compilation> compilations = compilationPage.getContent();
 
         if (compilations.isEmpty()) {
             return Collections.emptyList();

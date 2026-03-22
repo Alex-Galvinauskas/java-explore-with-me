@@ -1,6 +1,3 @@
-stats-server:
-  url: http://localhost:9090
-
 stats:
   client:
     core-pool-size: 5

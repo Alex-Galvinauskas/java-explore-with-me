@@ -31,6 +31,13 @@ public class UserServiceImpl implements UserService {
     public UserDto registerUser(NewUserRequest newUserRequest) {
         log.info("Регистрация нового пользователя: {}, email: {}", newUserRequest.getName(), newUserRequest.getEmail());
 
+        // ✅ Добавляем предварительную проверку
+        if (userRepository.existsByEmail(newUserRequest.getEmail())) {
+            throw new ConflictException(
+                    String.format("Пользователь с email '%s' уже существует", newUserRequest.getEmail())
+            );
+        }
+
         User user = userMapper.toEntity(newUserRequest);
 
         try {
@@ -39,13 +46,8 @@ public class UserServiceImpl implements UserService {
             return userMapper.toDto(savedUser);
         } catch (DataIntegrityViolationException e) {
             String message = String.format("Пользователь с email '%s' уже существует", newUserRequest.getEmail());
-
-            if (e.getMessage() != null && e.getMessage().contains("uq_email")) {
-                log.warn("Нарушение уникальности email: {}", newUserRequest.getEmail());
-                throw new ConflictException(message);
-            }
-            log.error("Ошибка целостности данных при регистрации пользователя", e);
-            throw new ConflictException("Ошибка при регистрации пользователя: " + e.getMessage());
+            log.warn(message, e);
+            throw new ConflictException(message);
         }
     }
 

@@ -46,7 +46,7 @@ public class RequestValidator {
 
     public void validateEventPublished(Event event) {
         if (event.getState() != EventState.PUBLISHED) {
-            throw new ValidationException("Нельзя создать заявку на неопубликованное событие");
+            throw new ConflictException("Нельзя создать заявку на неопубликованное событие");
         }
     }
 

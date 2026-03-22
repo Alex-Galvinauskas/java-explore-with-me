@@ -8,9 +8,9 @@ import ru.practicum.stats.dto.event.UpdateEventUserRequest;
 import ru.practicum.stats.exception.ConflictException;
 import ru.practicum.stats.exception.NotFoundException;
 import ru.practicum.stats.exception.ValidationException;
-import ru.practicum.stats.mapper.LocationMapper;
 import ru.practicum.stats.model.Category;
 import ru.practicum.stats.model.Event;
+import ru.practicum.stats.model.Location;
 import ru.practicum.stats.model.enums.EventState;
 import ru.practicum.stats.repository.CategoryRepository;
 import ru.practicum.stats.service.event.validation.EventValidator;
@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class EventUpdater {
 
     private final CategoryRepository categoryRepository;
-    private final LocationMapper locationMapper;
     private final EventValidator validator;
 
     public void updateCategoryIfNeeded(Event event, Long categoryId) {
@@ -59,7 +58,7 @@ public class EventUpdater {
     private void updateFields(Event event,
                               String annotation,
                               String description,
-                              LocationDto location,
+                              LocationDto locationDto,
                               Boolean paid,
                               Integer participantLimit,
                               Boolean requestModeration,
@@ -76,8 +75,11 @@ public class EventUpdater {
             }
             event.setDescription(description);
         }
-        if (location != null) {
-            event.setLocation(locationMapper.toEntity(location));
+        if (locationDto != null) {
+            Location location = new Location();
+            location.setLat(locationDto.getLat());
+            location.setLon(locationDto.getLon());
+            event.setLocation(location);
         }
         if (paid != null) {
             event.setPaid(paid);

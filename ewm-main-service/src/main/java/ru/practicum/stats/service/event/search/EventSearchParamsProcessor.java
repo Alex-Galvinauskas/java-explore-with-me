@@ -1,6 +1,7 @@
 package ru.practicum.stats.service.event.search;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import ru.practicum.stats.exception.ValidationException;
@@ -9,7 +10,7 @@ import ru.practicum.stats.service.event.validation.PaginationValidator;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EventSearchParamsProcessor {
@@ -41,10 +42,21 @@ public class EventSearchParamsProcessor {
             rangeStart = LocalDateTime.now();
             rangeEnd = LocalDateTime.now().plusYears(100);
         } else if (rangeStart == null) {
-            rangeStart = LocalDateTime.now().minusYears(100);
+            rangeStart = LocalDateTime.now();
         } else if (rangeEnd == null) {
             rangeEnd = LocalDateTime.now().plusYears(100);
         }
+
+        // ✅ Добавить эту проверку!
+        if (rangeStart.isAfter(rangeEnd)) {
+            log.warn("rangeStart ({}) is after rangeEnd ({}), swapping them", rangeStart, rangeEnd);
+            LocalDateTime temp = rangeStart;
+            rangeStart = rangeEnd;
+            rangeEnd = temp;
+        }
+
+        Integer from = params.getFrom() != null ? params.getFrom() : 0;
+        Integer size = params.getSize() != null ? params.getSize() : 10;
 
         return EventSearchParams.builder()
                 .text(params.getText())
@@ -54,10 +66,11 @@ public class EventSearchParamsProcessor {
                 .rangeEnd(rangeEnd)
                 .onlyAvailable(params.getOnlyAvailable() != null ? params.getOnlyAvailable() : false)
                 .sort(params.getSort())
-                .from(params.getFrom())
-                .size(params.getSize())
+                .from(from)
+                .size(size)
                 .build();
     }
+
 
     public EventSearchParams prepareAdminSearchParams(EventSearchParams params) {
         LocalDateTime rangeStart = params.getRangeStart();
@@ -70,19 +83,33 @@ public class EventSearchParamsProcessor {
             rangeEnd = LocalDateTime.now().plusYears(100);
         }
 
+        // ✅ ДОБАВИТЬ ЭТУ ПРОВЕРКУ!
+        if (rangeStart.isAfter(rangeEnd)) {
+            log.warn("Админский поиск: rangeStart ({}) позже rangeEnd ({}), меняем их местами",
+                    rangeStart, rangeEnd);
+            LocalDateTime temp = rangeStart;
+            rangeStart = rangeEnd;
+            rangeEnd = temp;
+        }
+
+        Integer from = params.getFrom() != null ? params.getFrom() : 0;
+        Integer size = params.getSize() != null ? params.getSize() : 10;
+
         return EventSearchParams.builder()
                 .users(params.getUsers())
                 .states(params.getStates())
                 .categories(params.getCategories())
                 .rangeStart(rangeStart)
                 .rangeEnd(rangeEnd)
-                .from(params.getFrom())
-                .size(params.getSize())
+                .from(from)
+                .size(size)
                 .build();
     }
 
     public Pageable createPageable(EventSearchParams params) {
-        return paginationValidator.createPageable(params.getFrom(), params.getSize());
+        int from = params.getFrom() != null ? params.getFrom() : 0;
+        int size = params.getSize() != null ? params.getSize() : 10;
+        return paginationValidator.createPageable(from, size);
     }
 
     public boolean shouldSortByViews(EventSearchParams params) {

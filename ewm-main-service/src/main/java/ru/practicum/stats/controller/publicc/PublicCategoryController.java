@@ -8,23 +8,24 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.category.CategoryDto;
 import ru.practicum.stats.service.category.CategoryService;
 
+
 import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping("/categories")
+@RequestMapping(path = "/categories")
 @RequiredArgsConstructor
 public class PublicCategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public List<CategoryDto> getCategories(@RequestParam(defaultValue = "0") @PositiveOrZero int from,
-                                           @RequestParam(defaultValue = "10") @Positive int size) {
+    public List<CategoryDto> getCategories(@RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                           @RequestParam(defaultValue = "10") @Positive Integer size) {
         return categoryService.getCategories(from, size);
     }
 
     @GetMapping("/{catId}")
-    public CategoryDto getCategory(@PathVariable Long catId) {
+    public CategoryDto getCategory(@PathVariable @Positive Long catId) {
         return categoryService.getCategory(catId);
     }
 }

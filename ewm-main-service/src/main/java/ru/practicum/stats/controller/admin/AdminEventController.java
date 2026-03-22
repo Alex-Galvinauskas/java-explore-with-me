@@ -13,12 +13,13 @@ import ru.practicum.stats.model.enums.EventState;
 import ru.practicum.stats.service.event.EventSearchParams;
 import ru.practicum.stats.service.event.EventService;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping("/admin/events")
+@RequestMapping(path = "/admin/events")
 @RequiredArgsConstructor
 public class AdminEventController {
 
@@ -31,8 +32,8 @@ public class AdminEventController {
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+            @RequestParam(defaultValue = "10") @Positive Integer size) {
 
         EventSearchParams params = EventSearchParams.builder()
                 .users(users)
@@ -48,7 +49,7 @@ public class AdminEventController {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateEvent(@PathVariable Long eventId,
+    public EventFullDto updateEvent(@PathVariable @Positive Long eventId,
                                     @Valid @RequestBody UpdateEventAdminRequest request) {
         return eventService.updateEventByAdmin(eventId, request);
     }

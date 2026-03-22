@@ -44,7 +44,7 @@ public class ViewStatsIncrementor {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        statsClient.hitAsync(hit);
+        statsClient.hitSync(hit);
         log.debug("Статистика просмотра отправлена для события {} с IP {}", eventId, clientIp);
     }
 }
