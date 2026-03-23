@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
 import ru.practicum.stats.exception.BadRequestException;
-import ru.practicum.stats.exception.StatsValidationException;
 import ru.practicum.stats.mapper.StatsMapper;
 import ru.practicum.stats.model.EndpointHitEntity;
 import ru.practicum.stats.repository.StatsRepository;

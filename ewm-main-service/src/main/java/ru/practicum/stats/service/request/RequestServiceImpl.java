@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.stats.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.stats.dto.request.ParticipationRequestDto;
-import ru.practicum.stats.exception.ConflictException;
 import ru.practicum.stats.exception.NotFoundException;
 import ru.practicum.stats.mapper.RequestMapper;
 import ru.practicum.stats.model.Event;

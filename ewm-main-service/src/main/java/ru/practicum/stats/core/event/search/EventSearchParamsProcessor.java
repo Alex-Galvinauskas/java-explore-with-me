@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import ru.practicum.stats.dto.event.EventSearchParams;
 import ru.practicum.stats.exception.BadRequestException;
 import ru.practicum.stats.exception.ValidationException;
-import ru.practicum.stats.dto.event.EventSearchParams;
 import ru.practicum.stats.validation.event.PaginationValidator;
 
 import java.time.LocalDateTime;

@@ -13,8 +13,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.event.EventFullDto;
-import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.dto.event.EventSearchParams;
+import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.service.event.EventService;
 
 import java.time.LocalDateTime;

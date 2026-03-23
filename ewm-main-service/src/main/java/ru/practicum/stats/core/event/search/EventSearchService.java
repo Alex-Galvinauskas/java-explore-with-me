@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import ru.practicum.stats.dto.event.EventSearchParams;
 import ru.practicum.stats.exception.NotFoundException;
 import ru.practicum.stats.model.Event;
 import ru.practicum.stats.model.enums.EventState;
 import ru.practicum.stats.repository.EventRepository;
-import ru.practicum.stats.dto.event.EventSearchParams;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -5,11 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import ru.practicum.stats.core.event.enrichment.EventResponseEnricher;
+import ru.practicum.stats.dto.event.EventSearchParams;
 import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.mapper.EventMapper;
 import ru.practicum.stats.model.Event;
-import ru.practicum.stats.dto.event.EventSearchParams;
-import ru.practicum.stats.core.event.enrichment.EventResponseEnricher;
 import ru.practicum.stats.statistics.event.StatisticsService;
 
 import java.util.List;

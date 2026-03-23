@@ -3,8 +3,8 @@ package ru.practicum.stats.core.event.search;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.practicum.stats.dto.event.EventShortDto;
 import ru.practicum.stats.dto.event.EventSearchParams;
+import ru.practicum.stats.dto.event.EventShortDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
