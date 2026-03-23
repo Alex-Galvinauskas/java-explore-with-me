@@ -28,10 +28,6 @@ public class OpenApiConfig {
                                 "- Приватный API для управления собственными событиями\n" +
                                 "- Административный API для управления пользователями и контентом\n" +
                                 "- Статистика просмотров событий")
-                        .contact(new Contact()
-                                .name("Practicum Team")
-                                .email("support@practicum.ru")
-                                .url("https://practicum.ru"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("http://springdoc.org")));
