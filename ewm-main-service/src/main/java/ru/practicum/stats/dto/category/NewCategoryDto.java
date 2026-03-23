@@ -1,5 +1,6 @@
 package ru.practicum.stats.dto.category;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -15,5 +16,6 @@ public class NewCategoryDto {
 
     @NotBlank(message = "Категория не может быть пустой")
     @Size(min = 1, max = 50, message = "Название категории должно быть от 1 до 50 символов")
+    @Schema(description = "Название категории")
     private String name;
 }

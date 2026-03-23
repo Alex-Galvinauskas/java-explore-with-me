@@ -1,5 +1,6 @@
 package ru.practicum.stats.exception;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,13 +18,10 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Глобальный обработчик ошибок для REST API
- */
 @Slf4j
+@Hidden
 @RestControllerAdvice
 public class ErrorHandler {
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
@@ -42,7 +40,6 @@ public class ErrorHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
     }
-
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex) {
@@ -172,25 +169,6 @@ public class ErrorHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
-        log.error("Внутренняя ошибка сервера: ", ex);
-
-        ApiError apiError = ApiError.of(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Внутренняя ошибка сервера",
-                "Произошла непредвиденная ошибка"
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
-    }
-
-    private String formatFieldError(FieldError error) {
-        String field = error.getField();
-        String message = error.getDefaultMessage();
-        return String.format("%s: %s", field, message);
-    }
-
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(NotFoundException ex) {
         log.error("Не найдено: {}", ex.getMessage());
@@ -228,5 +206,27 @@ public class ErrorHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
+        log.error("=== НЕОБРАБОТАННОЕ ИСКЛЮЧЕНИЕ ===");
+        log.error("Тип: {}", ex.getClass().getName());
+        log.error("Сообщение: {}", ex.getMessage());
+        log.error("Стек-трейс: ", ex);
+
+        ApiError apiError = ApiError.of(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Внутренняя ошибка сервера",
+                ex.getClass().getName() + ": " + ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
+    }
+
+    private String formatFieldError(FieldError error) {
+        String field = error.getField();
+        String message = error.getDefaultMessage();
+        return String.format("%s: %s", field, message);
     }
 }

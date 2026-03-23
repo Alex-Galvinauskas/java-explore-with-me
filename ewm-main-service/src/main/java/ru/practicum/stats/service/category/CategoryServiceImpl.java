@@ -33,14 +33,6 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto addCategory(NewCategoryDto newCategoryDto) {
         log.info("Добавление новой категории: {}", newCategoryDto.getName());
 
-        // ✅ Добавляем предварительную проверку
-        categoryRepository.findByName(newCategoryDto.getName())
-                .ifPresent(category -> {
-                    throw new ConflictException(
-                            String.format("Категория с именем '%s' уже существует", newCategoryDto.getName())
-                    );
-                });
-
         Category category = categoryMapper.toEntity(newCategoryDto);
 
         try {
@@ -48,9 +40,9 @@ public class CategoryServiceImpl implements CategoryService {
             log.info("Категория успешно добавлена с id: {}", savedCategory.getId());
             return categoryMapper.toDto(savedCategory);
         } catch (DataIntegrityViolationException e) {
-            String message = String.format("Категория с именем '%s' уже существует", newCategoryDto.getName());
-            log.warn(message, e);
-            throw new ConflictException(message);
+            throw new ConflictException(
+                    String.format("Категория с именем \"%s\" уже существует", newCategoryDto.getName())
+            );
         }
     }
 
@@ -62,21 +54,6 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Категория с id=" + catId + " не найдена"));
 
-        if (category.getName().equals(categoryDto.getName())) {
-            log.info("Имя категории не изменилось");
-            return categoryMapper.toDto(category);
-        }
-
-        // ✅ Проверяем, что новое имя не занято другой категорией
-        categoryRepository.findByName(categoryDto.getName())
-                .ifPresent(existingCategory -> {
-                    if (!existingCategory.getId().equals(catId)) {
-                        throw new ConflictException(
-                                String.format("Категория с именем '%s' уже существует", categoryDto.getName())
-                        );
-                    }
-                });
-
         category.setName(categoryDto.getName());
 
         try {
@@ -84,9 +61,9 @@ public class CategoryServiceImpl implements CategoryService {
             log.info("Категория с id: {} успешно обновлена", catId);
             return categoryMapper.toDto(updatedCategory);
         } catch (DataIntegrityViolationException e) {
-            String message = String.format("Категория с именем '%s' уже существует", categoryDto.getName());
-            log.warn(message, e);
-            throw new ConflictException(message);
+            throw new ConflictException(
+                    String.format("Категория с именем \"%s\" уже существует", categoryDto.getName())
+            );
         }
     }
 
@@ -95,25 +72,17 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(Long catId) {
         log.info("Удаление категории с id: {}", catId);
 
-        if (!categoryRepository.existsById(catId)) {
-            throw new NotFoundException("Категория с id=" + catId + " не найдена");
-        }
+        Category category = categoryRepository.findById(catId)
+                .orElseThrow(() -> new NotFoundException("Категория с id=" + catId + " не найдена"));
 
         if (eventRepository.existsByCategoryId(catId)) {
-            String message = String.format("Невозможно удалить категорию с id=%d," +
-                    " так как с ней связаны существующие события", catId);
-            log.warn(message);
-            throw new ConflictException(message);
+            throw new ConflictException(
+                    String.format("Категория с id=%d не может быть удалена, так как содержит события", catId)
+            );
         }
 
-        try {
-            categoryRepository.deleteById(catId);
-            log.info("Категория с id: {} успешно удалена", catId);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Ошибка при удалении категории с id: {}", catId, e);
-            throw new ConflictException("Невозможно удалить категорию с id=" + catId +
-                    ", так как с ней связаны события");
-        }
+        categoryRepository.delete(category);
+        log.info("Категория с id: {} успешно удалена", catId);
     }
 
     @Override

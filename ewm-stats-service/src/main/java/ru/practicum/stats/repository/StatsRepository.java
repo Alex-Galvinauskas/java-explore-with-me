@@ -14,12 +14,13 @@ import java.util.List;
 public interface StatsRepository extends JpaRepository<EndpointHitEntity, Long> {
 
     /**
-     * Получение статистики по посещениям с фильтрацией по URI
-     * @param start начало диапазона дат
-     * @param end конец диапазона дат
-     * @param uris список URI для фильтрации (не может быть null)
-     * @param unique флаг уникальности по IP
-     * @return список статистики ViewStats
+     * Получить статистику по посещениям с фильтрацией по URI
+     *
+     * @param start  начало диапазона дат
+     * @param end    конец диапазона дат
+     * @param uris   список URI для фильтрации
+     * @param unique флаг уникальности по IP (true - уникальные IP, false - все запросы)
+     * @return список объектов ViewStats с агрегированной статистикой, отсортированный по убыванию количества запросов
      */
     @Query("SELECT new ru.practicum.stats.dto.ViewStats(" +
             "h.app, " +
@@ -36,11 +37,12 @@ public interface StatsRepository extends JpaRepository<EndpointHitEntity, Long> 
                              @Param("unique") boolean unique);
 
     /**
-     * Получение всей статистики без фильтрации по URI
-     * @param start начало диапазона дат
-     * @param end конец диапазона дат
-     * @param unique флаг уникальности по IP
-     * @return список статистики ViewStats
+     * Получить всю статистику по посещениям без фильтрации по URI
+     *
+     * @param start  начало диапазона дат
+     * @param end    конец диапазона дат
+     * @param unique флаг уникальности по IP (true - уникальные IP, false - все запросы)
+     * @return список объектов ViewStats с агрегированной статистикой, отсортированный по убыванию количества запросов
      */
     @Query("SELECT new ru.practicum.stats.dto.ViewStats(" +
             "h.app, " +

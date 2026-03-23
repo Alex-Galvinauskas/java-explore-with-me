@@ -1,5 +1,6 @@
 package ru.practicum.stats.dto.event;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LocationDto {
-    @NotNull(message = "Latitude cannot be null")
+    @NotNull(message = "Широта не может быть пустой")
+    @Schema(description = "Широта")
     private Float lat;
 
-    @NotNull(message = "Longitude cannot be null")
+    @NotNull(message = "Долгота не может быть пустой")
+    @Schema(description = "Долгота")
     private Float lon;
 }

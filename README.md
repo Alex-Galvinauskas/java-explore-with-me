@@ -55,8 +55,12 @@
 ## API Документация
 - Спецификация основного сервиса: [ewm-main-service-spec.json](ewm-main-service-spec.json)
 - Спецификация сервиса статистики: [ewm-stats-service-spec.json](ewm-stats-service-spec.json)
-- **Swagger UI**: После запуска приложения доступен по `http://localhost:8080/swagger-ui/index.html`
-- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+- **Swagger UI**: После запуска приложения доступен по 
+- http://localhost:8080/swagger-ui/index.html
+- http://localhost:9090/swagger-ui/index.html
+- **OpenAPI JSON**: 
+- http://localhost:8080/v3/api-docs
+- http://localhost:9090/v3/api-docs
 
 Основные эндпоинты:
 - **Публичный API**: `/categories`, `/compilations`, `/events`
@@ -66,173 +70,250 @@
 
 ## Структура проекта
 
-explore-with-me/                                  # КОРНЕВОЙ ПРОЕКТ (родительский модуль)  
-├── pom.xml                                       # Управляет версиями и объединяет все модули  
-├── docker-compose.yml                            # Оркестрация контейнеров: main-service, stats-service, 2 БД  
-│
-├── ewm-main-service/                              # МОДУЛЬ 1: ОСНОВНОЙ СЕРВИС (порт 8080)  
-│   ├── pom.xml                                    # Зависимости: stats-client, Spring Web, JPA, PostgreSQL  
-│   ├── Dockerfile                                 # Сборка образа основного сервиса  
-│   └── src/  
-│       └── main/  
-│           ├── java/ru/practicum/main/  
-│           │   ├── MainServiceApplication.java    # Точка входа (@SpringBootApplication)  
-│           │   │  
-│           │   ├── controller/                     # REST-контроллеры (обработка HTTP-запросов)  
-│           │   │   ├── admin/                      # 🔐 Административный API (только для админов)  
-│           │   │   │   ├── AdminCategoryController.java     # CRUD категорий  
-│           │   │   │   ├── AdminCompilationController.java  # CRUD подборок событий  
-│           │   │   │   ├── AdminEventController.java         # Модерация событий (публикация/отклонение)  
-│           │   │   │   └── AdminUserController.java          # Управление пользователями  
-│           │   │   │  
-│           │   │   ├── private/                    # 🔐 Закрытый API (только авторизованные)  
-│           │   │   │   ├── PrivateEventController.java      # Создание/редактирование своих событий  
-│           │   │   │   └── PrivateRequestController.java     # Управление заявками на участие  
-│           │   │   │  
-│           │   │   └── public/                      # 🌍 Публичный API (доступен всем)  
-│           │   │       ├── PublicCategoryController.java    # Просмотр категорий  
-│           │   │       ├── PublicCompilationController.java # Просмотр подборок  
-│           │   │       └── PublicEventController.java       # Поиск и фильтрация событий + СТАТИСТИКА  
-│           │   │  
-│           │   ├── service/                         # Бизнес-логика (сервисный слой)  
-│           │   │   ├── category/                     # Работа с категориями  
-│           │   │   │   ├── CategoryService.java       # Интерфейс  
-│           │   │   │   └── CategoryServiceImpl.java   # Реализация  
-│           │   │   │  
-│           │   │   ├── compilation/                   # Работа с подборками  
-│           │   │   │   ├── CompilationService.java  
-│           │   │   │   └── CompilationServiceImpl.java  
-│           │   │   │  
-│           │   │   ├── event/                         # Работа с событиями (основная логика)  
-│           │   │   │   ├── EventService.java  
-│           │   │   │   └── EventServiceImpl.java      # Здесь интеграция со StatsClient для статистики  
-│           │   │   │  
-│           │   │   ├── request/                       # Работа с заявками на участие  
-│           │   │   │   ├── RequestService.java  
-│           │   │   │   └── RequestServiceImpl.java    # Логика подтверждения/отклонения заявок  
-│           │   │   │  
-│           │   │   └── user/                          # Работа с пользователями  
-│           │   │       ├── UserService.java  
-│           │   │       └── UserServiceImpl.java  
-│           │   │  
-│           │   ├── repository/                       # DAO слой (доступ к БД через Spring Data JPA)  
-│           │   │   ├── CategoryRepository.java        # Category JpaRepository  
-│           │   │   ├── CompilationRepository.java     # Compilation JpaRepository + @Query для сложных запросов  
-│           │   │   ├── EventRepository.java           # Event JpaRepository + кастомные методы фильтрации  
-│           │   │   ├── RequestRepository.java         # Request JpaRepository  
-│           │   │   └── UserRepository.java            # User JpaRepository  
-│           │   │  
-│           │   ├── model/                            # JPA-сущности (таблицы БД)  
-│           │   │   ├── Category.java                  # Категории событий  
-│           │   │   ├── Compilation.java               # Подборки событий (ManyToMany с Event)  
-│           │   │   ├── Event.java                     # События (главная сущность)  
-│           │   │   ├── User.java                       # Пользователи  
-│           │   │   ├── Request.java                    # Заявки на участие (связь User <-> Event)  
-│           │   │   ├── Location.java                   # Встраиваемый объект (координаты)  
-│           │   │   └── enums/                         # Перечисления  
-│           │   │       ├── EventState.java             # PENDING, PUBLISHED, CANCELED  
-│           │   │       └── RequestStatus.java          # PENDING, CONFIRMED, REJECTED, CANCELED  
-│           │   │  
-│           │   ├── dto/                               # 📦 DTO (Data Transfer Objects) для API  
-│           │   │   ├── category/                       # ДТО для категорий  
-│           │   │   │   ├── CategoryDto.java            # Ответ: id + name  
-│           │   │   │   └── NewCategoryDto.java         # Запрос: только name  
-│           │   │   │  
-│           │   │   ├── compilation/                    # ДТО для подборок  
-│           │   │   │   ├── CompilationDto.java         # Полная информация о подборке  
-│           │   │   │   ├── NewCompilationDto.java      # Создание подборки  
-│           │   │   │   └── UpdateCompilationRequest.java # Обновление подборки  
-│           │   │   │  
-│           │   │   ├── event/                          # ДТО для событий  
-│           │   │   │   ├── EventFullDto.java           # Полная информация (для /events/{id})  
-│           │   │   │   ├── EventShortDto.java          # Краткая информация (для списков)  
-│           │   │   │   ├── NewEventDto.java            # Создание события  
-│           │   │   │   ├── UpdateEventAdminRequest.java # Модерация (админ)  
-│           │   │   │   └── UpdateEventUserRequest.java # Редактирование (пользователь)  
-│           │   │   │  
-│           │   │   ├── request/                        # ДТО для заявок  
-│           │   │   │   ├── ParticipationRequestDto.java # Информация о заявке  
-│           │   │   │   ├── EventRequestStatusUpdateRequest.java # Подтверждение/отклонение  
-│           │   │   │   └── EventRequestStatusUpdateResult.java # Результат обработки  
-│           │   │   │  
-│           │   │   └── user/                           # ДТО для пользователей  
-│           │   │       ├── UserDto.java                # Полная информация  
-│           │   │       ├── UserShortDto.java           # Краткая информация (для Event)  
-│           │   │       └── NewUserRequest.java         # Регистрация нового пользователя  
-│           │   │  
-│           │   ├── mapper/                             # 🗺️ Мапперы (Entity <-> DTO)  
-│           │   │   ├── CategoryMapper.java             # Category <-> CategoryDto  
-│           │   │   ├── CompilationMapper.java          # Compilation <-> CompilationDto  
-│           │   │   ├── EventMapper.java                # Event <-> EventFullDto/EventShortDto  
-│           │   │   ├── RequestMapper.java              # Request <-> ParticipationRequestDto  
-│           │   │   └── UserMapper.java                 # User <-> UserDto/UserShortDto  
-│           │   │  
-│           │   └── exception/                          # 🚨 Глобальная обработка ошибок  
-│           │       ├── ErrorHandler.java               # @ControllerAdvice, обработка исключений  
-│           │       └── ApiError.java                   # Модель ошибки (статус, сообщение, причина)  
-│           │  
-│           └── resources/  
-│               ├── application.properties              # Порт 8080, настройки БД, URL stats-сервиса  
-│               └── schema.sql                           # DDL для создания таблиц основного сервиса  
+explore-with-me (родительский проект)  
 │  
-├── ewm-stats-service/                                  # МОДУЛЬ 2: СЕРВИС СТАТИСТИКИ (порт 9090)  
-│   ├── pom.xml                                          # Зависимости: stats-dto, Spring Web, JPA, PostgreSQL  
-│   ├── Dockerfile                                       # Сборка образа сервиса статистики  
-│   └── src/  
-│       └── main/  
-│           ├── java/ru/practicum/stats/  
-│           │   ├── StatsServiceApplication.java         # Точка входа (@SpringBootApplication)  
-│           │   │  
-│           │   ├── controller/  
-│           │   │   └── StatsController.java             # REST-контроллер статистики  
-│           │   │       ├── POST /hit                    # Сохранить информацию о запросе  
-│           │   │       └── GET /stats                    # Получить статистику с фильтрацией  
-│           │   │  
-│           │   ├── service/  
-│           │   │   ├── StatsService.java                 # Интерфейс  
-│           │   │   └── StatsServiceImpl.java             # Реализация логики статистики  
-│           │   │  
-│           │   ├── repository/  
-│           │   │   └── StatsRepository.java              # JpaRepository для EndpointHitEntity  
-│           │   │       # Кастомные @Query для агрегации данных с GROUP BY  
-│           │   │  
-│           │   ├── mapper/  
-│           │   │   └── StatsMapper.java                  # EndpointHit <-> EndpointHitEntity  
-│           │   │  
-│           │   └── model/  
-│           │       └── EndpointHitEntity.java            # JPA-сущность (таблица hits)  
-│           │           # Поля: id, app, uri, ip, timestamp  
-│           │  
-│           └── resources/  
-│               ├── application.properties                # Порт 9090, настройки БД статистики  
-│               └── schema.sql                             # CREATE TABLE IF NOT EXISTS hits (...)  
+├── pom.xml (родительский)  
 │  
-├── ewm-stats-client/                                     # МОДУЛЬ 3: КЛИЕНТ ДЛЯ СТАТИСТИКИ  
-│   ├── pom.xml                                            # Зависимости: stats-dto, Spring Web, Apache HttpClient  
-│   └── src/  
-│       └── main/  
-│           └── java/ru/practicum/stats/client/  
-│               ├── StatsClient.java                       # 🔌 HTTP-клиент для stats-service  
-│               │   # Инкапсулирует вызовы:  
-│               │   # - hit() -> POST /hit  
-│               │   # - getStats() -> GET /stats  
-│               │  
-│               ├── StatsClientConfig.java                 # Настройка RestClient  
-│               │   # @Bean RestClient с таймаутами, логированием  
-│               │  
-│               └── exception/  
-│                   └── StatsClientException.java          # Собственное исключение для ошибок клиента  
-│  
-└── ewm-stats-dto/                                         # МОДУЛЬ 4: ОБЩИЕ DTO ДЛЯ СТАТИСТИКИ  
-├── pom.xml                                             # Lombok, Jackson, validation  
-└── src/  
-└── main/  
-└── java/ru/practicum/stats/dto/  
-├── EndpointHit.java                        # 📤 Запрос к POST /hit  
-│   # Поля: app, uri, ip, timestamp  
-│
-└── ViewStats.java                           # 📥 Ответ от GET /stats  
-Поля: app, uri, hits  
+├── ewm-main-service (основной модуль)  
+│   ├── pom.xml  
+│   ├── src/  
+│   │   ├── main/  
+│   │   │   ├── java/  
+│   │   │   │   └── ru/practicum/  
+│   │   │   │       └── stats/  
+│   │   │   │           ├── MainServiceApplication.java  
+│   │   │   │           │  
+│   │   │   │           ├── config/  
+│   │   │   │           │   └── OpenApiConfig.java  
+│   │   │   │           │  
+│   │   │   │           ├── controller/  
+│   │   │   │           │   ├── admin/  
+│   │   │   │           │   │   ├── AdminCategoryController.java  
+│   │   │   │           │   │   ├── AdminCompilationController.java  
+│   │   │   │           │   │   ├── AdminEventController.java  
+│   │   │   │           │   │   └── AdminUserController.java  
+│   │   │   │           │   ├── privatee/  
+│   │   │   │           │   │   ├── PrivateEventController.java  
+│   │   │   │           │   │   └── PrivateRequestController.java  
+│   │   │   │           │   └── publicc/  
+│   │   │   │           │       ├── PublicCategoryController.java  
+│   │   │   │           │       ├── PublicCompilationController.java  
+│   │   │   │           │       └── PublicEventController.java  
+│   │   │   │           │  
+│   │   │   │           ├── core/  
+│   │   │   │           │   ├── compilation/  
+│   │   │   │           │   │   ├── loader/  
+│   │   │   │           │   │   │   └── CompilationEventLoader.java  
+│   │   │   │           │   │   └── mapper/  
+│   │   │   │           │   │       └── CompilationMapperHelper.java  
+│   │   │   │           │   ├── event/  
+│   │   │   │           │   │   ├── builder/  
+│   │   │   │           │   │   │   ├── EventBuilder.java  
+│   │   │   │           │   │   │   ├── EventFieldUpdater.java  
+│   │   │   │           │   │   │   └── EventUpdater.java  
+│   │   │   │           │   │   ├── enricher/  
+│   │   │   │           │   │   │   ├── EventEnricher.java  
+│   │   │   │           │   │   │   └── EventResponseEnricher.java  
+│   │   │   │           │   │   └── search/  
+│   │   │   │           │   │       ├── DateRangeNormalizer.java  
+│   │   │   │           │   │       ├── EventResponsePostProcessor.java  
+│   │   │   │           │   │       ├── EventSearchOrchestrator.java  
+│   │   │   │           │   │       ├── EventSearchParamsProcessor.java  
+│   │   │   │           │   │       └── EventSearchService.java  
+│   │   │   │           │   ├── request/  
+│   │   │   │           │   │   ├── RequestCanceller.java  
+│   │   │   │           │   │   ├── RequestConfirmer.java  
+│   │   │   │           │   │   ├── RequestCreator.java  
+│   │   │   │           │   │   ├── RequestFetcher.java  
+│   │   │   │           │   │   ├── RequestRejecter.java  
+│   │   │   │           │   │   └── RequestStatusUpdater.java  
+│   │   │   │           │   └── user/  
+│   │   │   │           │       └── query/  
+│   │   │   │           │           └── UserQueryService.java  
+│   │   │   │           │  
+│   │   │   │           ├── dto/  
+│   │   │   │           │   ├── category/  
+│   │   │   │           │   │   ├── CategoryDto.java  
+│   │   │   │           │   │   └── NewCategoryDto.java  
+│   │   │   │           │   ├── compilation/  
+│   │   │   │           │   │   ├── CompilationDto.java  
+│   │   │   │           │   │   ├── NewCompilationDto.java  
+│   │   │   │           │   │   └── UpdateCompilationRequest.java  
+│   │   │   │           │   ├── event/  
+│   │   │   │           │   │   ├── EventFullDto.java  
+│   │   │   │           │   │   ├── EventShortDto.java  
+│   │   │   │           │   │   ├── NewEventDto.java  
+│   │   │   │           │   │   ├── UpdateEventAdminRequest.java  
+│   │   │   │           │   │   ├── UpdateEventUserRequest.java  
+│   │   │   │           │   │   ├── LocationDto.java  
+│   │   │   │           │   │   └── EventSearchParams.java  
+│   │   │   │           │   ├── request/  
+│   │   │   │           │   │   ├── ParticipationRequestDto.java  
+│   │   │   │           │   │   ├── EventRequestStatusUpdateRequest.java  
+│   │   │   │           │   │   └── EventRequestStatusUpdateResult.java  
+│   │   │   │           │   └── user/  
+│   │   │   │           │       ├── NewUserRequest.java  
+│   │   │   │           │       ├── UserDto.java  
+│   │   │   │           │       └── UserShortDto.java  
+│   │   │   │           │  
+│   │   │   │           ├── exception/  
+│   │   │   │           │   ├── ApiError.java  
+│   │   │   │           │   ├── BadRequestException.java  
+│   │   │   │           │   ├── ConflictException.java  
+│   │   │   │           │   ├── ErrorHandler.java  
+│   │   │   │           │   ├── ForbiddenException.java  
+│   │   │   │           │   ├── NotFoundException.java  
+│   │   │   │           │   └── ValidationException.java  
+│   │   │   │           │  
+│   │   │   │           ├── mapper/  
+│   │   │   │           │   ├── CategoryMapper.java  
+│   │   │   │           │   ├── CompilationMapper.java  
+│   │   │   │           │   ├── EventMapper.java  
+│   │   │   │           │   ├── LocationMapper.java  
+│   │   │   │           │   ├── RequestMapper.java  
+│   │   │   │           │   └── UserMapper.java  
+│   │   │   │           │  
+│   │   │   │           ├── model/  
+│   │   │   │           │   ├── BaseEntity.java  
+│   │   │   │           │   ├── Category.java  
+│   │   │   │           │   ├── Compilation.java  
+│   │   │   │           │   ├── Event.java  
+│   │   │   │           │   ├── Location.java  
+│   │   │   │           │   ├── Request.java  
+│   │   │   │           │   ├── User.java  
+│   │   │   │           │   └── enums/  
+│   │   │   │           │       ├── EventState.java  
+│   │   │   │           │       └── RequestStatus.java  
+│   │   │   │           │  
+│   │   │   │           ├── repository/  
+│   │   │   │           │   ├── BaseRepository.java  
+│   │   │   │           │   ├── CategoryRepository.java  
+│   │   │   │           │   ├── CompilationRepository.java  
+│   │   │   │           │   ├── EventRepository.java  
+│   │   │   │           │   ├── RequestRepository.java  
+│   │   │   │           │   └── UserRepository.java  
+│   │   │   │           │  
+│   │   │   │           ├── service/  
+│   │   │   │           │   ├── category/  
+│   │   │   │           │   │   ├── CategoryService.java  
+│   │   │   │           │   │   └── CategoryServiceImpl.java  
+│   │   │   │           │   ├── compilation/  
+│   │   │   │           │   │   ├── CompilationService.java  
+│   │   │   │           │   │   └── CompilationServiceImpl.java  
+│   │   │   │           │   ├── event/  
+│   │   │   │           │   │   ├── EventService.java  
+│   │   │   │           │   │   └── EventServiceImpl.java  
+│   │   │   │           │   ├── request/  
+│   │   │   │           │   │   ├── RequestService.java  
+│   │   │   │           │   │   └── RequestServiceImpl.java  
+│   │   │   │           │   └── user/  
+│   │   │   │           │       ├── UserService.java  
+│   │   │   │           │       └── UserServiceImpl.java  
+│   │   │   │           │  
+│   │   │   │           ├── statistics/  
+│   │   │   │           │   ├── event/  
+│   │   │   │           │   │   └── StatisticsService.java  
+│   │   │   │           │   └── request/  
+│   │   │   │           │       └── ViewStatsIncrementor.java  
+│   │   │   │           │  
+│   │   │   │           ├── strategy/  
+│   │   │   │           │   └── request/  
+│   │   │   │           │       └── RequestAutoConfirmer.java  
+│   │   │   │           │  
+│   │   │   │           └── validation/  
+│   │   │   │               ├── compilation/  
+│   │   │   │               │   └── CompilationValidator.java  
+│   │   │   │               ├── event/  
+│   │   │   │               │   ├── EventFieldValidator.java  
+│   │   │   │               │   ├── EventValidator.java  
+│   │   │   │               │   └── PaginationValidator.java  
+│   │   │   │               ├── request/  
+│   │   │   │               │   └── RequestValidator.java  
+│   │   │   │               └── user/  
+│   │   │   │                   └── UserValidatior.java  
+│   │   │   │  
+│   │   │   └── resources/  
+│   │   │       ├── application.properties  
+│   │   │       ├── application.yaml  
+│   │   │       ├── application-docker.properties  
+│   │   │       ├── application-test.properties  
+│   │   │       └── schema.sql  
+│   │   │  
+│   │   └── test/  
+│   │
+├── ewm-stats-dto (модуль DTO для статистики)  
+│   ├── pom.xml  
+│   ├── src/  
+│   │   ├── main/  
+│   │   │   ├── java/  
+│   │   │   │   └── ru/practicum/stats/dto/  
+│   │   │   │       ├── CategoryDto.java  
+│   │   │   │       ├── EndpointHit.java  
+│   │   │   │       ├── NewCategoryDto.java  
+│   │   │   │       └── ViewStats.java  
+│   │   │   └── resources/  
+│   │   └── test/  
+│   │  
+├── ewm-stats-client (модуль клиента статистики)  
+│   ├── pom.xml  
+│   ├── src/  
+│   │   ├── main/  
+│   │   │   ├── java/  
+│   │   │   │   └── ru/practicum/stats/  
+│   │   │   │       ├── client/  
+│   │   │   │       │   ├── StatsClient.java  
+│   │   │   │       │   └── ClientStatsMonitoring.java  
+│   │   │   │       └── config/  
+│   │   │   │           └── StatsClientConfig.java  
+│   │   │   └── resources/  
+│   │   │       └── application.yaml  
+│   │   └── test/  
+│   │  
+└── ewm-stats-service (модуль сервиса статистики)  
+├── pom.xml  
+├── src/  
+│   ├── main/  
+│   │   ├── java/  
+│   │   │   └── ru/practicum/stats/  
+│   │   │       ├── StatsServiceApplication.java  
+│   │   │       │  
+│   │   │       ├── config/  
+│   │   │       │   ├── JacksonConfig.java  
+│   │   │       │   └── OpenApiConfig.java  
+│   │   │       │  
+│   │   │       ├── controller/  
+│   │   │       │   └── StatsController.java  
+│   │   │       │  
+│   │   │       ├── exception/  
+│   │   │       │   ├── ApiError.java  
+│   │   │       │   ├── BadRequestException.java  
+│   │   │       │   ├── ConflictException.java  
+│   │   │       │   ├── ErrorHandler.java  
+│   │   │       │   ├── NotFoundException.java  
+│   │   │       │   ├── StatsValidationException.java  
+│   │   │       │   └── ValidationException.java  
+│   │   │       │  
+│   │   │       ├── mapper/  
+│   │   │       │   └── StatsMapper.java  
+│   │   │       │  
+│   │   │       ├── model/  
+│   │   │       │   └── EndpointHitEntity.java  
+│   │   │       │  
+│   │   │       ├── repository/  
+│   │   │       │   └── StatsRepository.java  
+│   │   │       │  
+│   │   │       └── service/  
+│   │   │           ├── StatsService.java  
+│   │   │           └── StatsServiceImpl.java  
+│   │   │  
+│   │   └── resources/  
+│   │       ├── application.properties  
+│   │       ├── application-dev.properties  
+│   │       ├── application-docker.properties  
+│   │       ├── application-test.properties  
+│   │       └── schema.sql  
+│   │  
+│   └── test/  
   
 
 # Зависимости

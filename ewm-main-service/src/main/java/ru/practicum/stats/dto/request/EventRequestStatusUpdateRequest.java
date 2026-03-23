@@ -1,5 +1,6 @@
 package ru.practicum.stats.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,8 +15,10 @@ import java.util.List;
 @AllArgsConstructor
 public class EventRequestStatusUpdateRequest {
     @NotNull(message = "Request ids cannot be null")
+    @Schema(description = "Список ID запросов")
     private List<Long> requestIds;
 
     @NotNull(message = "Status cannot be null")
+    @Schema(description = "Новый статус")
     private String status;
 }

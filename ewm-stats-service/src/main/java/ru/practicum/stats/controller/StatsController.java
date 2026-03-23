@@ -1,5 +1,6 @@
 package ru.practicum.stats.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,9 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
@@ -25,7 +24,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping
-@Tag(name = "StatsController", description = "API для работы со статистикой посещений")
+@Tag(name = "Stats", description = "API для работы со статистикой посещений")
 public class StatsController {
 
     private final StatsService statsService;
@@ -33,24 +32,36 @@ public class StatsController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Сохранить информацию о посещении")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Информация сохранена"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса"),
+            @ApiResponse(responseCode = "409", description = "Конфликт данных"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
-    public EndpointHit hit(
-            @Valid @RequestBody
-            @Parameter(description = "Данные запроса", required = true)
-            EndpointHit hitDto
-    ) {
+    public EndpointHit hit(@Valid @RequestBody EndpointHit hitDto) {
         return statsService.hit(hitDto);
     }
 
     @GetMapping("/stats")
+    @Operation(summary = "Получить статистику посещений")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Статистика получена"),
+            @ApiResponse(responseCode = "400",
+                    description = "Неверный формат даты (yyyy-MM-dd HH:mm:ss) или другие ошибки валидации"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
     public List<ViewStats> getStats(
-            @RequestParam() String start,
-            @RequestParam() String end,
+            @Parameter(description = "Начало периода (формат: yyyy-MM-dd HH:mm:ss)", required = true)
+            @RequestParam String start,
+
+            @Parameter(description = "Окончание периода (формат: yyyy-MM-dd HH:mm:ss)", required = true)
+            @RequestParam String end,
+
+            @Parameter(description = "Список URI для фильтрации")
             @RequestParam(required = false) List<String> uris,
+
+            @Parameter(description = "Учитывать только уникальные посещения")
             @RequestParam(defaultValue = "false") boolean unique) {
 
         LocalDateTime startDate;
@@ -61,12 +72,6 @@ public class StatsController {
             endDate = LocalDateTime.parse(end, FORMATTER);
         } catch (DateTimeParseException e) {
             throw new BadRequestException("Неверный формат даты. Ожидается: yyyy-MM-dd HH:mm:ss");
-        }
-
-        if (startDate.isAfter(endDate)) {
-            throw new BadRequestException(
-                    String.format("Дата начала (%s) не может быть позже даты конца (%s)", start, end)
-            );
         }
 
         return statsService.getStats(startDate, endDate, uris, unique);

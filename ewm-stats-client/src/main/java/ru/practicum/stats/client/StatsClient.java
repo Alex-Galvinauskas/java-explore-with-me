@@ -8,21 +8,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -45,45 +41,10 @@ public class StatsClient {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Асинхронная отправка статистики
-     */
-    @Async("statsExecutor")
-    public CompletableFuture<Void> hitAsync(EndpointHit hit) {
-        try {
-            String url = serverUrl + "/hit";
-            log.debug("Sending async hit to stats-service: {}", url);
-
-            HttpEntity<EndpointHit> requestEntity = new HttpEntity<>(hit);
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    requestEntity,
-                    Void.class
-            );
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                successfulRequests.incrementAndGet();
-                log.debug("Hit saved successfully for uri: {}", hit.getUri());
-            } else {
-                failedRequests.incrementAndGet();
-                log.warn("Failed to save hit for uri: {}, status: {}", hit.getUri(), response.getStatusCode());
-            }
-            return CompletableFuture.completedFuture(null);
-        } catch (Exception e) {
-            failedRequests.incrementAndGet();
-            log.error("Error saving hit for uri: {}: {}", hit.getUri(), e.getMessage());
-            return CompletableFuture.failedFuture(e);
-        }
-    }
-
-    /**
-     * Синхронная отправка статистики (для критичных случаев)
-     */
     public void hitSync(EndpointHit hit) {
         try {
             String url = serverUrl + "/hit";
-            log.info("Sending hit to stats-service: {} with body: {}", url, hit);
+            log.info("Отправка hit в stats-service: {} тело: {}", url, hit);
 
             HttpEntity<EndpointHit> requestEntity = new HttpEntity<>(hit);
             ResponseEntity<Void> response = restTemplate.exchange(
@@ -95,34 +56,16 @@ public class StatsClient {
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 successfulRequests.incrementAndGet();
-                log.info("Hit saved successfully with status: {}", response.getStatusCode());
+                log.info("Hit успешно сохранён со статусом: {}", response.getStatusCode());
             } else {
                 failedRequests.incrementAndGet();
-                log.error("Failed to save hit, status: {}", response.getStatusCode());
+                log.error("Не удалось сохранить hit, статус: {}", response.getStatusCode());
             }
         } catch (Exception e) {
             failedRequests.incrementAndGet();
-            log.error("Error saving hit: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to save hit", e);
+            log.error("Ошибка при сохранении hit: {}", e.getMessage(), e);
+            throw new RuntimeException("Не удалось сохранить hit", e);
         }
-    }
-
-    /**
-     * Получение статистики для списка URI
-     */
-    public Map<String, Long> getStatsForUris(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        if (uris == null || uris.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<ViewStats> statsList = getStats(start, end, uris, true);
-        Map<String, Long> statsMap = new HashMap<>();
-
-        for (ViewStats stats : statsList) {
-            statsMap.put(stats.getUri(), stats.getHits());
-        }
-
-        return statsMap;
     }
 
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end,
@@ -146,12 +89,11 @@ public class StatsClient {
             }
 
             String url = builder.build().toUriString();
-            log.debug("Getting stats from: {}", url);
+            log.info("Получение статистики из: {}", url);
 
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-            log.debug("Response status: {}", response.getStatusCode());
-            log.debug("Response body: {}", response.getBody());
+            log.info("Статус ответа: {}, тело: {}", response.getStatusCode(), response.getBody());
 
             if (response.getBody() != null) {
                 return objectMapper.readValue(
@@ -162,7 +104,7 @@ public class StatsClient {
 
             return Collections.emptyList();
         } catch (Exception e) {
-            log.error("Error getting stats: {}", e.getMessage(), e); // Добавить stack trace
+            log.error("Ошибка при получении статистики: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }

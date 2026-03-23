@@ -1,5 +1,6 @@
 package ru.practicum.stats.dto.compilation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,9 +14,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateCompilationRequest {
+    @Schema(description = "Список ID событий в подборке")
     private List<Long> events;
+
+    @Schema(description = "Закрепить подборку на главной странице")
     private Boolean pinned;
 
-    @Size(min = 1, max = 50, message = "Title must be between 1 and 50 characters")
+    @Size(max = 50, message = "Заголовок должен быть от 1 до 50 символов")
+    @Schema(description = "Заголовок подборки")
     private String title;
 }

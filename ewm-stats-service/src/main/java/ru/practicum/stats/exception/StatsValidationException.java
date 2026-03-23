@@ -1,7 +1,9 @@
 package ru.practicum.stats.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public class StatsValidationException extends RuntimeException {
 
     private final HttpStatus status;
@@ -13,32 +15,22 @@ public class StatsValidationException extends RuntimeException {
         this.reason = reason;
     }
 
-    // Конструктор для BadRequestException
     public StatsValidationException(String message, String reason, HttpStatus status) {
         super(message);
         this.status = status;
         this.reason = reason;
     }
 
-    // Конструктор с Throwable
     public StatsValidationException(String message, String reason, Throwable cause) {
         super(message, cause);
         this.status = HttpStatus.BAD_REQUEST;
         this.reason = reason;
     }
 
-    // Конструктор с 4 параметрами
     public StatsValidationException(String message, String reason, HttpStatus status, Throwable cause) {
         super(message, cause);
         this.status = status;
         this.reason = reason;
     }
 
-    public HttpStatus getStatus() {
-        return status;
-    }
-
-    public String getReason() {
-        return reason;
-    }
 }

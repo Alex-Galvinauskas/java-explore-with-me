@@ -11,11 +11,15 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # ✅ Критически важно для batch fetching
+        default_batch_fetch_size: 20
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
     show-sql: true
+    # ✅ Отключаем open-in-view для предотвращения случайных запросов
+    open-in-view: false
 
   sql:
     init:
