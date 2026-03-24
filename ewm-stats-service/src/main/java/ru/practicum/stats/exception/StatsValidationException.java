@@ -21,9 +21,16 @@ public class StatsValidationException extends RuntimeException {
         this.reason = reason;
     }
 
+    public StatsValidationException(String message, String reason, Throwable cause) {
+        super(message, cause);
+        this.status = HttpStatus.BAD_REQUEST;
+        this.reason = reason;
+    }
+
     public StatsValidationException(String message, String reason, HttpStatus status, Throwable cause) {
         super(message, cause);
         this.status = status;
         this.reason = reason;
     }
+
 }

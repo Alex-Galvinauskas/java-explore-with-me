@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info(
                 title = "Stats Service API",
                 version = "1.0.0",
-                description = "API для сбора и предоставления статистики посещений",
+                description = "API for collecting and providing visit statistics",
                 license = @License(
                         name = "Apache 2.0",
                         url = "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
         servers = {
                 @Server(
                         url = "http://localhost:9090",
-                        description = "Локальный сервер"
+                        description = "Local server"
                 )
         }
 )

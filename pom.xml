@@ -40,6 +40,7 @@
 		<jackson.version>2.17.2</jackson.version>
 		<postgresql.version>42.7.4</postgresql.version>
 		<h2.version>2.2.224</h2.version>
+		<jts-core.version>1.19.0</jts-core.version>
 
 		<!-- Версии плагинов -->
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -99,6 +100,11 @@
 				<groupId>com.h2database</groupId>
 				<artifactId>h2</artifactId>
 				<version>${h2.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.locationtech.jts</groupId>
+				<artifactId>jts-core</artifactId>
+				<version>${jts-core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.mapstruct</groupId>

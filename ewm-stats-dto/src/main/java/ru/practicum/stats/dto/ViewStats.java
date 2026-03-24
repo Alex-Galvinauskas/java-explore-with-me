@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Статистика по посещениям")
+@Schema(description = "Статистика посещений")
 public class ViewStats {
 
-    @Schema(description = "Идентификатор сервиса", example = "ewm-main-service")
+    @Schema(description = "Название сервиса", example = "ewm-main-service")
     private String app;
 
     @Schema(description = "URI", example = "/events/1")

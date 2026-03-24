@@ -15,7 +15,7 @@ import java.util.List;
 public class ApiError {
 
     @Schema(description = "Статус ошибки", example = "BAD_REQUEST")
-    private HttpStatus status;
+    private String status;
 
     @Schema(description = "Причина ошибки", example = "Ошибка валидации")
     private String reason;
@@ -32,7 +32,7 @@ public class ApiError {
 
     public static ApiError of(HttpStatus status, String reason, String message) {
         return ApiError.builder()
-                .status(status)
+                .status(status.name())
                 .reason(reason)
                 .message(message)
                 .timestamp(LocalDateTime.now())
@@ -41,7 +41,7 @@ public class ApiError {
 
     public static ApiError of(HttpStatus status, String reason, String message, List<String> errors) {
         return ApiError.builder()
-                .status(status)
+                .status(status.name())
                 .reason(reason)
                 .message(message)
                 .errors(errors)

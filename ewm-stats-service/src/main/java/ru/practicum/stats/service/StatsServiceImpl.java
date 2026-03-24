@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
 import ru.practicum.stats.exception.BadRequestException;
-import ru.practicum.stats.exception.StatsValidationException;
 import ru.practicum.stats.mapper.StatsMapper;
 import ru.practicum.stats.model.EndpointHitEntity;
 import ru.practicum.stats.repository.StatsRepository;
@@ -15,9 +14,6 @@ import ru.practicum.stats.repository.StatsRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Реализация сервиса статистики
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,8 +25,12 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     @Transactional
-    public void hit(EndpointHit hitDto) {
+    public EndpointHit hit(EndpointHit hitDto) {
         log.info("Сохранение информации о запросе: {}", hitDto);
+
+        if (hitDto.getTimestamp() == null) {
+            hitDto.setTimestamp(LocalDateTime.now());
+        }
 
         validateHitDto(hitDto);
 
@@ -38,31 +38,35 @@ public class StatsServiceImpl implements StatsService {
 
         if (entity.getTimestamp() == null) {
             entity.setTimestamp(LocalDateTime.now());
-            log.debug("Timestamp не указан, установлено текущее время: {}", entity.getTimestamp());
         }
 
         EndpointHitEntity savedEntity = statsRepository.save(entity);
         log.info("Информация о запросе успешно сохранена с id: {}", savedEntity.getId());
+
+        return statsMapper.toDto(savedEntity);
     }
 
-
     @Override
-    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        log.info("Запрос статистики: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+    @Transactional(readOnly = true)
+    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end,
+                                    List<String> uris, boolean unique) {
+        log.info("Получение статистики: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
 
         validateDates(start, end);
 
-        List<String> uriList = (uris != null && uris.isEmpty()) ? null : uris;
+        if (uris == null || uris.isEmpty()) {
+            return statsRepository.getStatsAll(start, end, unique);
+        }
 
-        List<ViewStats> stats = statsRepository.getStats(start, end, uriList, unique);
+        List<ViewStats> stats = statsRepository.getStats(start, end, uris, unique);
 
-        log.info("Получено {} записей статистики", stats.size());
+        log.info("Найдено {} записей статистики для uris: {}", stats.size(), uris);
         return stats;
     }
 
     @Override
     public List<ViewStats> getStatsAll(LocalDateTime start, LocalDateTime end, boolean unique) {
-        log.info("Запрос всей статистики: start={}, end={}, unique={}", start, end, unique);
+        log.info("Получение всей статистики: start={}, end={}, unique={}", start, end, unique);
 
         validateDates(start, end);
 
@@ -72,24 +76,14 @@ public class StatsServiceImpl implements StatsService {
         return stats;
     }
 
-    /**
-     * Валидация диапазона дат
-     * @param start начало диапазона
-     * @param end конец диапазона
-     * @throws StatsValidationException если start позже end
-     */
     private void validateDates(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) {
-            throw new StatsValidationException(
-                    "Даты начала и конца должны быть указаны",
-                    "Отсутствуют обязательные параметры дат"
-            );
+            throw new BadRequestException("Даты начала и конца должны быть указаны");
         }
 
         if (start.isAfter(end)) {
-            throw new StatsValidationException(
-                    String.format("Дата начала (%s) не может быть позже даты конца (%s)", start, end),
-                    "Некорректный диапазон дат"
+            throw new BadRequestException(
+                    String.format("Дата начала (%s) не может быть позже даты конца (%s)", start, end)
             );
         }
     }

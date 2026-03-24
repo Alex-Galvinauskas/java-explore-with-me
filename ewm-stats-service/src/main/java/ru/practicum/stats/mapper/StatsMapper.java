@@ -7,8 +7,7 @@ import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.model.EndpointHitEntity;
 
 @Mapper(componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        implementationPackage = "ru.practicum.stats.mapper.impl")
+        unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface StatsMapper {
 
     @Mapping(target = "id", ignore = true)
