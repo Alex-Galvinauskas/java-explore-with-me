@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.EndpointHit;
 import ru.practicum.stats.dto.ViewStats;
@@ -29,7 +30,6 @@ public class StatsController {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @PostMapping("/hit")
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Сохранить информацию о посещении")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Информация сохранена"),
@@ -37,8 +37,9 @@ public class StatsController {
             @ApiResponse(responseCode = "409", description = "Конфликт данных"),
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
-    public EndpointHit hit(@Valid @RequestBody EndpointHit hitDto) {
-        return statsService.hit(hitDto);
+    public ResponseEntity<EndpointHit> hit(@Valid @RequestBody EndpointHit hitDto) {
+        EndpointHit hit = statsService.hit(hitDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(hit);
     }
 
     @GetMapping("/stats")
@@ -49,7 +50,7 @@ public class StatsController {
                     description = "Неверный формат даты (yyyy-MM-dd HH:mm:ss) или другие ошибки валидации"),
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
-    public List<ViewStats> getStats(
+    public ResponseEntity<List<ViewStats>> getStats(
             @Parameter(description = "Начало периода (формат: yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam String start,
 
@@ -72,6 +73,7 @@ public class StatsController {
             throw new BadRequestException("Неверный формат даты. Ожидается: yyyy-MM-dd HH:mm:ss");
         }
 
-        return statsService.getStats(startDate, endDate, uris, unique);
+        List<ViewStats> stats = statsService.getStats(startDate, endDate, uris, unique);
+        return ResponseEntity.ok(stats);
     }
 }

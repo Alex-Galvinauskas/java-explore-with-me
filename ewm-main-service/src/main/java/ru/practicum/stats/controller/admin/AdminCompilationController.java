@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.compilation.CompilationDto;
@@ -26,7 +27,6 @@ public class AdminCompilationController {
     private final CompilationService compilationService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создать новую подборку событий")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Подборка создана"),
@@ -34,22 +34,23 @@ public class AdminCompilationController {
                     description = "Некорректные данные, ошибка валидации, неверный формат запроса"),
             @ApiResponse(responseCode = "409", description = "Конфликт: подборка с таким названием уже существует")
     })
-    public CompilationDto saveCompilation(@Valid @RequestBody NewCompilationDto newCompilationDto) {
-        return compilationService.saveCompilation(newCompilationDto);
+    public ResponseEntity<CompilationDto> saveCompilation(@Valid @RequestBody NewCompilationDto newCompilationDto) {
+        CompilationDto compilation = compilationService.saveCompilation(newCompilationDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(compilation);
     }
 
     @DeleteMapping("/{compId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Удалить подборку")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Подборка удалена"),
             @ApiResponse(responseCode = "400", description = "Некорректный ID подборки"),
             @ApiResponse(responseCode = "404", description = "Подборка не найдена")
     })
-    public void deleteCompilation(
+    public ResponseEntity<Void> deleteCompilation(
             @Parameter(description = "ID подборки", required = true, example = "1")
             @PathVariable @Positive Long compId) {
         compilationService.deleteCompilation(compId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{compId}")
@@ -61,10 +62,11 @@ public class AdminCompilationController {
             @ApiResponse(responseCode = "404", description = "Подборка не найдена"),
             @ApiResponse(responseCode = "409", description = "Конфликт: подборка с таким названием уже существует")
     })
-    public CompilationDto updateCompilation(
+    public ResponseEntity<CompilationDto> updateCompilation(
             @Parameter(description = "ID подборки", required = true, example = "1")
             @PathVariable @Positive Long compId,
             @Valid @RequestBody UpdateCompilationRequest request) {
-        return compilationService.updateCompilation(compId, request);
+        CompilationDto compilation = compilationService.updateCompilation(compId, request);
+        return ResponseEntity.ok(compilation);
     }
 }

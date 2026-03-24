@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.event.EventFullDto;
@@ -37,7 +38,7 @@ public class PublicEventController {
                     description = "Некорректные параметры запроса, неверный формат даты, " +
                             "некорректный диапазон дат, неверный тип сортировки")
     })
-    public List<EventShortDto> getEvents(
+    public ResponseEntity<List<EventShortDto>> getEvents(
             @Parameter(description = "Текст для поиска в аннотации и описании")
             @RequestParam(required = false) String text,
             @Parameter(description = "Список ID категорий", example = "[1,2,3]")
@@ -70,7 +71,8 @@ public class PublicEventController {
                 .size(size)
                 .build();
 
-        return eventService.getEvents(params, request);
+        List<EventShortDto> events = eventService.getEvents(params, request);
+        return ResponseEntity.ok(events);
     }
 
     @GetMapping("/{id}")
@@ -80,10 +82,11 @@ public class PublicEventController {
             @ApiResponse(responseCode = "400", description = "Некорректный ID события"),
             @ApiResponse(responseCode = "404", description = "Событие не найдено или не опубликовано")
     })
-    public EventFullDto getEvent(
+    public ResponseEntity<EventFullDto> getEvent(
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long id,
             HttpServletRequest request) {
-        return eventService.getEvent(id, request);
+        EventFullDto event = eventService.getEvent(id, request);
+        return ResponseEntity.ok(event);
     }
 }

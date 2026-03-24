@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.category.CategoryDto;
@@ -24,7 +25,6 @@ public class AdminCategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Добавить новую категорию")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Категория создана"),
@@ -32,8 +32,9 @@ public class AdminCategoryController {
                     description = "Некорректные данные, ошибка валидации, неверный формат запроса"),
             @ApiResponse(responseCode = "409", description = "Конфликт: категория с таким именем уже существует")
     })
-    public CategoryDto addCategory(@Valid @RequestBody NewCategoryDto newCategoryDto) {
-        return categoryService.addCategory(newCategoryDto);
+    public ResponseEntity<CategoryDto> addCategory(@Valid @RequestBody NewCategoryDto newCategoryDto) {
+        CategoryDto category = categoryService.addCategory(newCategoryDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(category);
     }
 
     @PatchMapping("/{catId}")
@@ -45,15 +46,15 @@ public class AdminCategoryController {
             @ApiResponse(responseCode = "404", description = "Категория не найдена"),
             @ApiResponse(responseCode = "409", description = "Конфликт: категория с таким именем уже существует")
     })
-    public CategoryDto updateCategory(
+    public ResponseEntity<CategoryDto> updateCategory(
             @Parameter(description = "ID категории", required = true, example = "1")
             @PathVariable @Positive Long catId,
             @Valid @RequestBody CategoryDto categoryDto) {
-        return categoryService.updateCategory(catId, categoryDto);
+        CategoryDto category = categoryService.updateCategory(catId, categoryDto);
+        return ResponseEntity.ok(category);
     }
 
     @DeleteMapping("/{catId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Удалить категорию")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Категория удалена"),
@@ -61,9 +62,10 @@ public class AdminCategoryController {
             @ApiResponse(responseCode = "404", description = "Категория не найдена"),
             @ApiResponse(responseCode = "409", description = "Конфликт: категория содержит события")
     })
-    public void deleteCategory(
+    public ResponseEntity<Void> deleteCategory(
             @Parameter(description = "ID категории", required = true, example = "1")
             @PathVariable @Positive Long catId) {
         categoryService.deleteCategory(catId);
+        return ResponseEntity.noContent().build();
     }
 }

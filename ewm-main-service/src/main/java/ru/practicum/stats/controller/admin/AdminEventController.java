@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.event.EventFullDto;
@@ -38,7 +39,7 @@ public class AdminEventController {
             @ApiResponse(responseCode = "400",
                     description = "Некорректные параметры запроса, неверный формат даты, некорректный диапазон дат")
     })
-    public List<EventFullDto> getEvents(
+    public ResponseEntity<List<EventFullDto>> getEvents(
             @Parameter(description = "Список ID пользователей", example = "[1,2,3]")
             @RequestParam(required = false) List<Long> users,
             @Parameter(description = "Список статусов событий")
@@ -71,7 +72,8 @@ public class AdminEventController {
                 .size(size)
                 .build();
 
-        return eventService.getEventsByAdmin(params);
+        List<EventFullDto> events = eventService.getEventsByAdmin(params);
+        return ResponseEntity.ok(events);
     }
 
     @PatchMapping("/{eventId}")
@@ -84,10 +86,11 @@ public class AdminEventController {
             @ApiResponse(responseCode = "409",
                     description = "Конфликт: дата события некорректна, событие уже опубликовано")
     })
-    public EventFullDto updateEvent(
+    public ResponseEntity<EventFullDto> updateEvent(
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long eventId,
             @Valid @RequestBody UpdateEventAdminRequest request) {
-        return eventService.updateEventByAdmin(eventId, request);
+        EventFullDto event = eventService.updateEventByAdmin(eventId, request);
+        return ResponseEntity.ok(event);
     }
 }

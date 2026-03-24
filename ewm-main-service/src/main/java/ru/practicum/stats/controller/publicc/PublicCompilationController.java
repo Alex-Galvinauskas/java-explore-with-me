@@ -10,6 +10,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.compilation.CompilationDto;
@@ -32,7 +33,7 @@ public class PublicCompilationController {
             @ApiResponse(responseCode = "200", description = "Список подборок получен"),
             @ApiResponse(responseCode = "400", description = "Некорректные параметры запроса")
     })
-    public List<CompilationDto> getCompilations(
+    public ResponseEntity<List<CompilationDto>> getCompilations(
             @Parameter(description = "Закреплена ли подборка на главной странице")
             @RequestParam(required = false) Boolean pinned,
             @Parameter(description = "Индекс первого элемента", example = "0")
@@ -42,7 +43,8 @@ public class PublicCompilationController {
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
-        return compilationService.getCompilations(pinned, pageable);
+        List<CompilationDto> compilations = compilationService.getCompilations(pinned, pageable);
+        return ResponseEntity.ok(compilations);
     }
 
     @GetMapping("/{compId}")
@@ -52,9 +54,10 @@ public class PublicCompilationController {
             @ApiResponse(responseCode = "400", description = "Некорректный ID подборки"),
             @ApiResponse(responseCode = "404", description = "Подборка не найдена")
     })
-    public CompilationDto getCompilation(
+    public ResponseEntity<CompilationDto> getCompilation(
             @Parameter(description = "ID подборки", required = true, example = "1")
             @PathVariable @Positive Long compId) {
-        return compilationService.getCompilation(compId);
+        CompilationDto compilation = compilationService.getCompilation(compId);
+        return ResponseEntity.ok(compilation);
     }
 }

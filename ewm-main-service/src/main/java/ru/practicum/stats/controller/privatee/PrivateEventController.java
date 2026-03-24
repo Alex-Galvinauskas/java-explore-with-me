@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.event.EventFullDto;
@@ -35,7 +36,6 @@ public class PrivateEventController {
     private final RequestService requestService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Добавить новое событие")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Событие создано"),
@@ -45,11 +45,12 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "404", description = "Пользователь не найден, категория не найдена"),
             @ApiResponse(responseCode = "409", description = "Конфликт: дата события некорректна")
     })
-    public EventFullDto addEvent(
+    public ResponseEntity<EventFullDto> addEvent(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Valid @RequestBody NewEventDto newEventDto) {
-        return eventService.addEvent(userId, newEventDto);
+        EventFullDto event = eventService.addEvent(userId, newEventDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(event);
     }
 
     @GetMapping
@@ -59,14 +60,15 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "400", description = "Некорректные параметры запроса"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    public List<EventShortDto> getEvents(
+    public ResponseEntity<List<EventShortDto>> getEvents(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "Индекс первого элемента", example = "0")
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @Parameter(description = "Количество элементов на странице", example = "10")
             @RequestParam(defaultValue = "10") @Positive Integer size) {
-        return eventService.getEventsByUser(userId, from, size);
+        List<EventShortDto> events = eventService.getEventsByUser(userId, from, size);
+        return ResponseEntity.ok(events);
     }
 
     @GetMapping("/{eventId}")
@@ -77,12 +79,13 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "404",
                     description = "Пользователь не найден, событие не найдено, событие не принадлежит пользователю")
     })
-    public EventFullDto getEvent(
+    public ResponseEntity<EventFullDto> getEvent(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long eventId) {
-        return eventService.getEventByUser(userId, eventId);
+        EventFullDto event = eventService.getEventByUser(userId, eventId);
+        return ResponseEntity.ok(event);
     }
 
     @PatchMapping("/{eventId}")
@@ -96,13 +99,14 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "409",
                     description = "Конфликт: событие нельзя изменить (уже опубликовано), дата события некорректна")
     })
-    public EventFullDto updateEvent(
+    public ResponseEntity<EventFullDto> updateEvent(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long eventId,
             @Valid @RequestBody UpdateEventUserRequest request) {
-        return eventService.updateEventByUser(userId, eventId, request);
+        EventFullDto event = eventService.updateEventByUser(userId, eventId, request);
+        return ResponseEntity.ok(event);
     }
 
     @GetMapping("/{eventId}/requests")
@@ -113,12 +117,13 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "404",
                     description = "Пользователь не найден, событие не найдено, событие не принадлежит пользователю")
     })
-    public List<ParticipationRequestDto> getEventRequests(
+    public ResponseEntity<List<ParticipationRequestDto>> getEventRequests(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long eventId) {
-        return requestService.getEventRequests(userId, eventId);
+        List<ParticipationRequestDto> requests = requestService.getEventRequests(userId, eventId);
+        return ResponseEntity.ok(requests);
     }
 
     @PatchMapping("/{eventId}/requests")
@@ -131,12 +136,13 @@ public class PrivateEventController {
             @ApiResponse(responseCode = "409",
                     description = "Конфликт: лимит участников превышен, нельзя отклонить подтвержденные запросы")
     })
-    public EventRequestStatusUpdateResult changeRequestStatus(
+    public ResponseEntity<EventRequestStatusUpdateResult> changeRequestStatus(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID события", required = true, example = "1")
             @PathVariable @Positive Long eventId,
             @Valid @RequestBody EventRequestStatusUpdateRequest request) {
-        return requestService.changeRequestStatus(userId, eventId, request);
+        EventRequestStatusUpdateResult result = requestService.changeRequestStatus(userId, eventId, request);
+        return ResponseEntity.ok(result);
     }
 }

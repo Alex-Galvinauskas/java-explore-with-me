@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.request.ParticipationRequestDto;
@@ -26,7 +27,6 @@ public class PrivateRequestController {
     private final RequestService requestService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создать запрос на участие в событии")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Запрос создан"),
@@ -36,7 +36,7 @@ public class PrivateRequestController {
                     description = "Конфликт: лимит участников превышен, повторный запрос," +
                             " инициатор события не может подать запрос")
     })
-    public ParticipationRequestDto addParticipationRequest(
+    public ResponseEntity<ParticipationRequestDto> addParticipationRequest(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID события", required = true, example = "1")
@@ -44,7 +44,8 @@ public class PrivateRequestController {
             HttpServletRequest httpRequest) {
 
         String clientIp = httpRequest.getRemoteAddr();
-        return requestService.addParticipationRequest(userId, eventId, clientIp);
+        ParticipationRequestDto request = requestService.addParticipationRequest(userId, eventId, clientIp);
+        return ResponseEntity.status(HttpStatus.CREATED).body(request);
     }
 
     @GetMapping
@@ -54,10 +55,11 @@ public class PrivateRequestController {
             @ApiResponse(responseCode = "400", description = "Некорректный ID пользователя"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    public List<ParticipationRequestDto> getUserRequests(
+    public ResponseEntity<List<ParticipationRequestDto>> getUserRequests(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId) {
-        return requestService.getUserRequests(userId);
+        List<ParticipationRequestDto> requests = requestService.getUserRequests(userId);
+        return ResponseEntity.ok(requests);
     }
 
     @PatchMapping("/{requestId}/cancel")
@@ -68,11 +70,12 @@ public class PrivateRequestController {
             @ApiResponse(responseCode = "404",
                     description = "Пользователь не найден, запрос не найден, запрос не принадлежит пользователю")
     })
-    public ParticipationRequestDto cancelRequest(
+    public ResponseEntity<ParticipationRequestDto> cancelRequest(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable @Positive Long userId,
             @Parameter(description = "ID запроса", required = true, example = "1")
             @PathVariable @Positive Long requestId) {
-        return requestService.cancelRequest(userId, requestId);
+        ParticipationRequestDto request = requestService.cancelRequest(userId, requestId);
+        return ResponseEntity.ok(request);
     }
 }

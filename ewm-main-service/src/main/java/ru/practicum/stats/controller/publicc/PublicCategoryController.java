@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.category.CategoryDto;
@@ -29,12 +30,13 @@ public class PublicCategoryController {
             @ApiResponse(responseCode = "200", description = "Список категорий получен"),
             @ApiResponse(responseCode = "400", description = "Некорректные параметры запроса")
     })
-    public List<CategoryDto> getCategories(
+    public ResponseEntity<List<CategoryDto>> getCategories(
             @Parameter(description = "Индекс первого элемента", example = "0")
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @Parameter(description = "Количество элементов на странице", example = "10")
             @RequestParam(defaultValue = "10") @Positive Integer size) {
-        return categoryService.getCategories(from, size);
+        List<CategoryDto> categories = categoryService.getCategories(from, size);
+        return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{catId}")
@@ -44,9 +46,10 @@ public class PublicCategoryController {
             @ApiResponse(responseCode = "400", description = "Некорректный ID категории"),
             @ApiResponse(responseCode = "404", description = "Категория не найдена")
     })
-    public CategoryDto getCategory(
+    public ResponseEntity<CategoryDto> getCategory(
             @Parameter(description = "ID категории", required = true, example = "1")
             @PathVariable @Positive Long catId) {
-        return categoryService.getCategory(catId);
+        CategoryDto category = categoryService.getCategory(catId);
+        return ResponseEntity.ok(category);
     }
 }
