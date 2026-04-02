@@ -233,6 +233,18 @@ public class EventServiceImpl implements EventService {
         return dto;
     }
 
+    @Transactional
+    @Override
+    public void deleteEventByAdmin(Long eventId) {
+        log.info("Удаление события администратором, eventId={}", eventId);
+
+        Event event = findEventById(eventId);
+
+        eventRepository.delete(event);
+
+        log.info("Событие успешно удалено, eventId={}", eventId);
+    }
+
     private Event findEventById(Long eventId) {
         Event event = eventRepository.findByIdWithDetails(eventId);
         if (event == null) {

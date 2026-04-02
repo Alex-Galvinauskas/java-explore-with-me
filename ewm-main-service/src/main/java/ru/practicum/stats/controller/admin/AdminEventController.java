@@ -93,4 +93,18 @@ public class AdminEventController {
         EventFullDto event = eventService.updateEventByAdmin(eventId, request);
         return ResponseEntity.ok(event);
     }
+
+    @DeleteMapping("/{eventId}")
+    @Operation(summary = "Удалить событие")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Событие удалено"),
+            @ApiResponse(responseCode = "400", description = "Некорректный ID события"),
+            @ApiResponse(responseCode = "404", description = "Событие не найдено")
+    })
+    public ResponseEntity<Void> deleteEvent(
+            @Parameter(description = "ID события", required = true, example = "1")
+            @PathVariable @Positive Long eventId) {
+        eventService.deleteEventByAdmin(eventId);
+        return ResponseEntity.noContent().build();
+    }
 }

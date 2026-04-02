@@ -104,4 +104,14 @@ public interface EventService {
      */
     @Transactional
     EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest request);
+
+    /**
+     * Удаляет событие администратором.
+     *
+     * @param eventId идентификатор события
+     * @throws ru.practicum.stats.exception.NotFoundException если событие не найдено
+     * @throws ru.practicum.stats.exception.ConflictException если событие нельзя удалить
+     */
+    @Transactional
+    void deleteEventByAdmin(Long eventId);
 }

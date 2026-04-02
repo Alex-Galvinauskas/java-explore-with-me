@@ -1,0 +1,10 @@
+-- Очистка таблиц после тестов
+DELETE FROM comments;
+DELETE FROM requests;
+DELETE FROM events;
+DELETE FROM users;
+DELETE FROM categories;
+ALTER TABLE categories ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE users ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE events ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE comments ALTER COLUMN id RESTART WITH 1;

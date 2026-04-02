@@ -187,6 +187,19 @@ public class ErrorHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<ApiError> handleCommentNotFound(CommentNotFoundException ex) {
+        log.error("Comment not found: {}", ex.getMessage());
+
+        ApiError apiError = ApiError.of(
+                HttpStatus.NOT_FOUND,
+                "Комментарий не найден",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.error("Нарушение целостности данных: {}", ex.getMessage());
@@ -280,10 +293,6 @@ public class ErrorHandler {
                 error.getRejectedValue());
     }
 
-    /**
-     * Извлекает имя поля из сообщения об ошибке БД
-     * Пример сообщения: "value too long for column \"title\""
-     */
     private String extractFieldName(String message) {
         if (message == null) return null;
 
@@ -299,9 +308,6 @@ public class ErrorHandler {
         return null;
     }
 
-    /**
-     * Извлекает понятное пользователю сообщение из технической ошибки БД
-     */
     private String extractUserMessage(String message) {
         if (message == null) {
             return "Операция нарушает целостность данных";
