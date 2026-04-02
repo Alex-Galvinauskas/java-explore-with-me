@@ -62,8 +62,8 @@ services:
     networks:
       - explore-with-me-network
 
-  # Основной сервис
-  main-service:
+  # Основной сервис (переименован в ewm-service)
+  ewm-service:
     build:
       context: .
       dockerfile: ewm-main-service/Dockerfile
