@@ -183,7 +183,8 @@ public class CommentIntegrationTest {
         response.then()
                 .log().all()
                 .statusCode(403)
-                .body("message", containsString("Only author can edit comment"));
+                .body("message",
+                        containsString("Only author can perform this action on comment"));
     }
 
     @Test
