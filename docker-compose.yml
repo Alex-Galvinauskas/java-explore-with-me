@@ -40,7 +40,7 @@ services:
       - explore-with-me-network
 
   # Сервис статистики
-  stats-service:
+  stats-server:
     build:
       context: .
       dockerfile: ewm-stats-service/Dockerfile
@@ -72,12 +72,12 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - STATS_SERVER_URL=http://stats-service:9090
+      - STATS_SERVER_URL=http://stats-server:9090
       - SERVER_PORT=8080
     depends_on:
       main-db:
         condition: service_healthy
-      stats-service:
+      stats-server:
         condition: service_healthy
     networks:
       - explore-with-me-network
