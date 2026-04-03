@@ -1,6 +1,8 @@
 # *Explore With Me* 🗺️
 *Приложение для поиска и организации событий, позволяющее пользователям делиться информацией об интересных мероприятиях и находить компанию для участия.*
 
+https://github.com/Alex-Galvinauskas/java-explore-with-me/pull/4
+
 ## Технологии
 - **Java 17**
 - **Spring Boot 3** (Web, Data JPA, Validation)

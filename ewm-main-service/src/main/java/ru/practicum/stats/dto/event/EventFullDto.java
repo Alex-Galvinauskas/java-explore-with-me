@@ -1,12 +1,19 @@
 package ru.practicum.stats.dto.event;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.stats.dto.category.CategoryDto;
 import ru.practicum.stats.dto.user.UserShortDto;
+import ru.practicum.stats.model.Comment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -60,4 +67,7 @@ public class EventFullDto {
 
     @Schema(description = "Количество просмотров")
     private Long views;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Comment> comments = new ArrayList<>();
 }

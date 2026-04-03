@@ -42,6 +42,12 @@
 		<h2.version>2.2.224</h2.version>
 		<jts-core.version>1.19.0</jts-core.version>
 
+		<!-- Тестовые зависимости -->
+		<rest-assured.version>5.3.0</rest-assured.version>
+		<mockito.version>5.11.0</mockito.version>
+		<assertj.version>3.25.3</assertj.version>
+		<junit-jupiter.version>5.10.2</junit-jupiter.version>
+
 		<!-- Версии плагинов -->
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -56,6 +62,7 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- Внутренние модули -->
 			<dependency>
 				<groupId>ru.practicum</groupId>
 				<artifactId>ewm-stats-dto</artifactId>
@@ -66,6 +73,8 @@
 				<artifactId>ewm-stats-client</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<!-- SpringDoc -->
 			<dependency>
 				<groupId>org.springdoc</groupId>
 				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -76,11 +85,15 @@
 				<artifactId>springdoc-openapi-starter-common</artifactId>
 				<version>${springdoc.version}</version>
 			</dependency>
+
+			<!-- HTTP Client -->
 			<dependency>
 				<groupId>org.apache.httpcomponents.client5</groupId>
 				<artifactId>httpclient5</artifactId>
 				<version>${httpclient5.version}</version>
 			</dependency>
+
+			<!-- Jackson -->
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-databind</artifactId>
@@ -91,6 +104,8 @@
 				<artifactId>jackson-datatype-jsr310</artifactId>
 				<version>${jackson.version}</version>
 			</dependency>
+
+			<!-- Database -->
 			<dependency>
 				<groupId>org.postgresql</groupId>
 				<artifactId>postgresql</artifactId>
@@ -106,6 +121,8 @@
 				<artifactId>jts-core</artifactId>
 				<version>${jts-core.version}</version>
 			</dependency>
+
+			<!-- MapStruct -->
 			<dependency>
 				<groupId>org.mapstruct</groupId>
 				<artifactId>mapstruct</artifactId>
@@ -115,6 +132,53 @@
 				<groupId>org.mapstruct</groupId>
 				<artifactId>mapstruct-processor</artifactId>
 				<version>${mapstruct.version}</version>
+			</dependency>
+
+			<!-- Тестовые зависимости -->
+			<dependency>
+				<groupId>io.rest-assured</groupId>
+				<artifactId>rest-assured</artifactId>
+				<version>${rest-assured.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.rest-assured</groupId>
+				<artifactId>json-path</artifactId>
+				<version>${rest-assured.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.rest-assured</groupId>
+				<artifactId>xml-path</artifactId>
+				<version>${rest-assured.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-junit-jupiter</artifactId>
+				<version>${mockito.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>${assertj.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-api</artifactId>
+				<version>${junit-jupiter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
+				<version>${junit-jupiter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-params</artifactId>
+				<version>${junit-jupiter.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -168,6 +232,10 @@
 						<systemPropertyVariables>
 							<spring.profiles.active>test</spring.profiles.active>
 						</systemPropertyVariables>
+						<argLine>
+							-XX:+EnableDynamicAgentLoading
+							-Djdk.attach.allowAttachSelf=true
+						</argLine>
 					</configuration>
 				</plugin>
 				<plugin>

@@ -1,6 +1,7 @@
 package ru.practicum.stats.core.user.query;
 
 import ru.practicum.stats.model.User;
+
 import java.util.List;
 
 /**
